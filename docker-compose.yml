@@ -1,0 +1,104 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-solva}
+      POSTGRES_USER: ${POSTGRES_USER:-solva}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-solva} -d ${POSTGRES_DB:-solva}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      RUN_MIGRATIONS: "true"
+      POSTGRES_HOST: db
+      U2NET_HOME: /models
+    volumes:
+      - media_data:/app/media
+      - model_data:/models
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  celery:
+    build: ./backend
+    env_file: .env
+    command: celery -A config worker --loglevel=info
+    environment:
+      POSTGRES_HOST: db
+      U2NET_HOME: /models
+    volumes:
+      - media_data:/app/media
+      - model_data:/models
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    build: ./backend
+    env_file: .env
+    command: celery -A config beat --loglevel=info
+    environment:
+      POSTGRES_HOST: db
+      U2NET_HOME: /models
+    volumes:
+      - media_data:/app/media
+      - model_data:/models
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_ADSENSE_CLIENT_ID: ${VITE_ADSENSE_CLIENT_ID:-}
+        VITE_ADSENSE_ENABLED: ${VITE_ADSENSE_ENABLED:-}
+        VITE_ADSENSE_MODE: ${VITE_ADSENSE_MODE:-manual}
+        VITE_ADSENSE_REQUIRE_CONSENT: ${VITE_ADSENSE_REQUIRE_CONSENT:-true}
+        VITE_ADSENSE_SLOT_HEADER: ${VITE_ADSENSE_SLOT_HEADER:-}
+        VITE_ADSENSE_SLOT_WORKSPACE: ${VITE_ADSENSE_SLOT_WORKSPACE:-}
+        VITE_ADSENSE_SLOT_MID: ${VITE_ADSENSE_SLOT_MID:-}
+        VITE_ADSENSE_SLOT_FOOTER: ${VITE_ADSENSE_SLOT_FOOTER:-}
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  media_data:
+  model_data:

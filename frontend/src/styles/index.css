@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #1f1a17;
+  background: #f4f1ea;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.checkerboard {
+  background-color: #f7f6f3;
+  background-image:
+    linear-gradient(45deg, #e4e0d8 25%, transparent 25%),
+    linear-gradient(-45deg, #e4e0d8 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e4e0d8 75%),
+    linear-gradient(-45deg, transparent 75%, #e4e0d8 75%);
+  background-size: 20px 20px;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0;
+}
+
+.comparison-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+}
+
+.comparison-frame:focus-within {
+  outline: 2px solid #0f6e6b;
+  outline-offset: 3px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+}
