@@ -47,6 +47,10 @@ ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
 if DJANGO_ENV == "production" and not ALLOWED_HOSTS:
     raise RuntimeError("DJANGO_ALLOWED_HOSTS is required when DJANGO_ENV=production.")
 
+ON_VERCEL = bool(os.environ.get("VERCEL"))
+if ON_VERCEL and ".vercel.app" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS = [*ALLOWED_HOSTS, ".vercel.app"]
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -108,10 +112,11 @@ if os.environ.get("POSTGRES_DB"):
         }
     }
 else:
+    sqlite_path = Path("/tmp/solva.sqlite3") if ON_VERCEL else BASE_DIR / "db.sqlite3"
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": sqlite_path,
         }
     }
 
@@ -129,7 +134,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATIC_ROOT.mkdir(parents=True, exist_ok=True)
+try:
+    STATIC_ROOT.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
 _STATICFILES_BACKEND = (
     "whitenoise.storage.CompressedStaticFilesStorage"
     if DJANGO_ENV == "production"
@@ -140,8 +148,11 @@ STORAGES = {
     "staticfiles": {"BACKEND": _STATICFILES_BACKEND},
 }
 
-MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / "media"))
+_default_media = Path("/tmp/solva-media") if ON_VERCEL else BASE_DIR / "media"
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", _default_media))
 MEDIA_URL = "/media/"
+if ON_VERCEL and not os.environ.get("U2NET_HOME"):
+    os.environ["U2NET_HOME"] = "/tmp/u2net"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -152,6 +163,19 @@ CORS_ALLOWED_ORIGINS = env_list(
 CORS_ALLOW_CREDENTIALS = False
 
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS", [])
+if ON_VERCEL:
+    for origin in ("https://*.vercel.app",):
+        if origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
+    for host in (
+        os.environ.get("VERCEL_PROJECT_PRODUCTION_URL", ""),
+        os.environ.get("VERCEL_URL", ""),
+    ):
+        host = host.strip()
+        if host:
+            origin = f"https://{host}"
+            if origin not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(origin)
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
@@ -169,7 +193,7 @@ if DJANGO_ENV == "production":
 else:
     SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", False)
 
-if env_bool("DJANGO_BEHIND_PROXY", False):
+if env_bool("DJANGO_BEHIND_PROXY", False) or ON_VERCEL:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     USE_X_FORWARDED_HOST = True
 

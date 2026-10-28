@@ -1,0 +1,3 @@
+# The repository root is what Vercel installs from. Dependencies live with
+# the Django project; this file points at that list.
+-r backend/requirements.txt
