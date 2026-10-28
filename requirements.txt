@@ -1,3 +1,14 @@
-# The repository root is what Vercel installs from. Dependencies live with
-# the Django project; this file points at that list.
--r backend/requirements.txt
+# Vercel reads this file from the repository root and does not follow
+# "-r" includes. Keep these lines identical to backend/requirements.txt.
+Django>=5.1,<5.3
+djangorestframework>=3.15,<3.17
+django-cors-headers>=4.6,<5
+drf-spectacular>=0.27,<0.29
+Pillow>=10.4,<12
+python-dotenv>=1.0,<2
+gunicorn>=23,<24
+whitenoise>=6.8,<7
+celery>=5.4,<6
+redis>=5.2,<6
+rembg>=2.0.61,<3
+onnxruntime>=1.20,<2

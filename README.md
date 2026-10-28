@@ -85,7 +85,7 @@ Backend tests use a fake provider for the API, and they call rembg directly only
 
 ## Vercel
 
-Vercel reads `manage.py` after it installs Python packages. It prefers `backend/pyproject.toml` over `backend/requirements.txt`. That file now lists the same dependencies, and the repository root `requirements.txt` includes them as well. Python is pinned to 3.12 in `.python-version`.
+Vercel reads `manage.py` after it installs Python packages. It prefers `backend/pyproject.toml` over `backend/requirements.txt`. That file now lists the same dependencies. The repository root `requirements.txt` repeats them, because Vercel does not follow a `-r` include. Python is pinned to 3.12 in `.python-version`.
 
 Set `DJANGO_SECRET_KEY` in the Vercel project. `DJANGO_ALLOWED_HOSTS` can stay as `localhost` for local use; a Vercel deploy also allows `.vercel.app`. The function filesystem is temporary: result files and the SQLite database live under `/tmp` and do not survive a new instance. Use `REMBG_MODEL=u2netp` for the first deploy. The default `u2net` file is about 176 MB and the download often exceeds a serverless time limit. Background removal still returns an error if the model cannot be loaded. It does not return the original image as a cutout.
 
