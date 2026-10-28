@@ -8,7 +8,7 @@ The interface is original. It is not a copy of remove.bg.
 
 - React, TypeScript, Vite, Tailwind CSS, React Router, Axios
 - Django, Django REST Framework, Pillow
-- Background removal through [rembg](https://github.com/danielgatis/rembg) (U²-Net by default) behind a small provider interface
+- Background removal with ONNX Runtime and the public U²-Net weights, behind a small provider interface
 - Optional PostgreSQL, Redis, and Celery. Anonymous removal does not need them.
 
 ## API
@@ -57,11 +57,11 @@ Open http://127.0.0.1:5173. Vite proxies `/api` to http://127.0.0.1:8000. Copy `
 
 ### AI model
 
-The default provider is `rembg` and the default model is `u2net`. rembg downloads the ONNX file on the first removal into `U2NET_HOME` or `~/.u2net`. That file is about 176 MB. The first request can take several minutes and needs network access. Later requests reuse the file.
+The default provider is `rembg` and the default model is `u2net`. The server downloads that ONNX file on the first removal into `U2NET_HOME` or `~/.u2net`. The file is about 176 MB. The first request can take several minutes and needs network access. Later requests reuse the file.
 
-`REMBG_MODEL=u2netp` is a smaller, faster model (about 4 MB) with lower edge quality. Other rembg model names work the same way.
+`REMBG_MODEL=u2netp` is a smaller, faster model (about 4 MB) with lower edge quality. Those two names are the supported models. The `rembg` Python package is not installed. It pulls OpenCV, SciPy, and Numba, and that set does not fit in a 500 MB serverless function. Masks are applied directly. There is no alpha-matting pass.
 
-Health stays HTTP 200 when the process is up. Read `ai.available` and `ai.model_cached`. If rembg is not installed, or the model cannot be downloaded, `POST /api/v1/images/remove-background/` returns **503** and does not pretend the original image was processed.
+Health stays HTTP 200 when the process is up. Read `ai.available` and `ai.model_cached`. If ONNX Runtime is not installed, or the model cannot be downloaded, `POST /api/v1/images/remove-background/` returns **503** and does not pretend the original image was processed.
 
 To send images to an external remover instead, set:
 
@@ -81,13 +81,13 @@ cd backend && ruff check . && python manage.py test
 cd frontend && npm test && npm run typecheck && npm run lint
 ```
 
-Backend tests use a fake provider for the API, and they call rembg directly only when the selected model's weights are already on disk. A missing model skips that one test.
+Backend tests use a fake provider for the API, and they run ONNX Runtime only when the selected model's weights are already on disk. A missing model skips that one test.
 
 ## Vercel
 
 Vercel reads `manage.py` after it installs Python packages. It prefers `backend/pyproject.toml` over `backend/requirements.txt`. That file now lists the same dependencies. The repository root `requirements.txt` repeats them, because Vercel does not follow a `-r` include. Python is pinned to 3.12 in `.python-version`.
 
-Set `DJANGO_SECRET_KEY` in the Vercel project. `DJANGO_ALLOWED_HOSTS` can stay as `localhost` for local use; a Vercel deploy also allows `.vercel.app`. The function filesystem is temporary: result files and the SQLite database live under `/tmp` and do not survive a new instance. Use `REMBG_MODEL=u2netp` for the first deploy. The default `u2net` file is about 176 MB and the download often exceeds a serverless time limit. Background removal still returns an error if the model cannot be loaded. It does not return the original image as a cutout.
+Set `DJANGO_SECRET_KEY` in the Vercel project. `DJANGO_ALLOWED_HOSTS` can stay as `localhost` for local use; a Vercel deploy also allows `.vercel.app`. The function filesystem is temporary: result files and the SQLite database live under `/tmp` and do not survive a new instance. Use `REMBG_MODEL=u2netp` for the first deploy. The default `u2net` file is about 176 MB and the download often exceeds a serverless time limit. Background removal still returns an error if the model cannot be loaded. It does not return the original image as a cutout. The function installs ONNX Runtime and NumPy, and leaves out the larger imaging libraries that previously made the bundle about 660 MB.
 
 ## Docker
 

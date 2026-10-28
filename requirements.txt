@@ -10,5 +10,5 @@ gunicorn>=23,<24
 whitenoise>=6.8,<7
 celery>=5.4,<6
 redis>=5.2,<6
-rembg>=2.0.61,<3
+numpy>=1.26,<3
 onnxruntime>=1.20,<2
