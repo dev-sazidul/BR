@@ -13,7 +13,9 @@ from rest_framework.views import APIView
 
 from apps.image_processing.exceptions import APIError, error_response
 from apps.image_processing.serializers import (
+    ConfigResponseSerializer,
     ErrorResponseSerializer,
+    HealthResponseSerializer,
     RemovalResponseSerializer,
     RemoveBackgroundSerializer,
 )
@@ -36,7 +38,15 @@ def _safe_cleanup() -> None:
 
 
 class HealthView(APIView):
-    @extend_schema(responses={200: OpenApiResponse(description="Process is up. AI may still be unavailable.")})
+    @extend_schema(
+        tags=["System"],
+        summary="Service health",
+        description=(
+            "The process is up when this returns 200. Read `ai.available` before uploading. "
+            "A degraded status still means the HTTP service is running. It does not mean a cutout was produced."
+        ),
+        responses={200: HealthResponseSerializer},
+    )
     def get(self, request):
         try:
             ai = get_provider().status()
@@ -58,7 +68,12 @@ class HealthView(APIView):
 
 
 class ConfigView(APIView):
-    @extend_schema(responses={200: OpenApiResponse(description="Public client settings. Secrets are not included.")})
+    @extend_schema(
+        tags=["System"],
+        summary="Public configuration",
+        description="Upload limits, formats, retention, and the configured model name. Secrets are omitted.",
+        responses={200: ConfigResponseSerializer},
+    )
     def get(self, request):
         model = settings.REMBG_MODEL if settings.AI_PROVIDER == "rembg" else None
         return Response(
@@ -80,6 +95,14 @@ class RemoveBackgroundView(APIView):
     throttle_classes = [BackgroundRemovalThrottle]
 
     @extend_schema(
+        tags=["Images"],
+        summary="Remove a background",
+        description=(
+            "Send one image as multipart field `image`. The original file is not stored. "
+            "The response contains signed URLs for the transparent PNG. "
+            "503 means the model is unavailable. 504 means processing exceeded the timeout. "
+            "Neither response includes a fake cutout."
+        ),
         request={"multipart/form-data": RemoveBackgroundSerializer},
         responses={
             200: RemovalResponseSerializer,
@@ -121,7 +144,16 @@ class RemoveBackgroundView(APIView):
 
 
 class ResultView(APIView):
-    @extend_schema(responses={200: OpenApiResponse(description="Transparent PNG preview.")})
+    @extend_schema(
+        tags=["Images"],
+        summary="Preview a cutout",
+        description="Returns the transparent PNG inline. The token is the signed value from result_url.",
+        responses={
+            200: OpenApiResponse(description="Inline image/png with a real alpha channel."),
+            404: ErrorResponseSerializer,
+            410: ErrorResponseSerializer,
+        },
+    )
     def get(self, request, token: str):
         try:
             path = resolve_result(token)
@@ -140,18 +172,35 @@ class ResultView(APIView):
 
 class ResultDownloadView(APIView):
     @extend_schema(
+        tags=["Images"],
+        summary="Download a cutout",
+        description=(
+            "PNG keeps transparency. JPEG flattens the cutout onto `background`, which must be #RRGGBB. "
+            "The default background is white. `jpg` is accepted as an alias of `jpeg`."
+        ),
         parameters=[
-            OpenApiParameter(name="format", type=str, required=False, description="png or jpeg"),
+            OpenApiParameter(
+                name="format",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                enum=["png", "jpeg", "jpg"],
+                description="Download format. Defaults to png.",
+            ),
             OpenApiParameter(
                 name="background",
                 type=str,
+                location=OpenApiParameter.QUERY,
                 required=False,
-                description="Hex color used when format=jpeg. Defaults to #FFFFFF.",
+                description="Hex color used when format is jpeg. Example: #FFFFFF.",
             ),
         ],
         responses={
-            200: OpenApiResponse(description="PNG or JPEG download."),
+            200: OpenApiResponse(description="Attachment image/png or image/jpeg."),
             400: ErrorResponseSerializer,
+            404: ErrorResponseSerializer,
+            410: ErrorResponseSerializer,
+            500: ErrorResponseSerializer,
         },
     )
     def get(self, request, token: str):

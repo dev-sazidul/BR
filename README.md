@@ -21,8 +21,10 @@ The interface is original. It is not a copy of remove.bg.
 | `GET` | `/api/v1/images/results/<token>/` | Inline transparent PNG. |
 | `GET` | `/api/v1/images/results/<token>/download/?format=png` | PNG download. |
 | `GET` | `/api/v1/images/results/<token>/download/?format=jpeg&background=%23FFFFFF` | JPEG flattened onto a hex color. |
-| `GET` | `/api/schema/` | OpenAPI schema. |
+| `GET` | `/api/schema/` | OpenAPI schema (YAML). |
 | `GET` | `/api/docs/` | Swagger UI. |
+
+How to open Swagger UI, try an upload, and regenerate `docs/openapi.yaml` is in [docs/swagger.md](docs/swagger.md).
 
 Errors look like:
 

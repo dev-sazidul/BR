@@ -242,9 +242,19 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Solva API",
-    "DESCRIPTION": "Background removal API. Uploads are anonymous and temporary.",
+    "DESCRIPTION": (
+        "Anonymous background removal. Upload one image, then preview or download the cutout "
+        "from the signed URLs. The original file is not stored. "
+        "Open the interactive docs at /api/docs/."
+    ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SCHEMA_PATH_PREFIX": r"/api/v1",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "TAGS": [
+        {"name": "System", "description": "Health and public limits. No secrets."},
+        {"name": "Images", "description": "Upload, preview, and download one cutout."},
+    ],
 }
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "")

@@ -138,6 +138,13 @@ class HealthAndConfigTests(ApiTestCase):
         response = self.client.get("/api/schema/")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Solva API", response.content)
+        self.assertIn(b"/api/v1/images/remove-background/", response.content)
+        self.assertIn(b"multipart/form-data", response.content)
+
+    def test_swagger_ui_is_served(self):
+        response = self.client.get("/api/docs/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"swagger-ui", response.content)
 
 
 class RemovalApiTests(ApiTestCase):

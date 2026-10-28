@@ -2,8 +2,13 @@ import axios from "axios";
 
 import type { ApiErrorBody } from "../types/api";
 
+export function apiBaseUrl(value: string | undefined): string {
+  const raw = (value || "").trim().replace(/\/$/, "");
+  return raw.replace(/\/api\/v1$/, "");
+}
+
 export const api = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, ""),
+  baseURL: apiBaseUrl(import.meta.env.VITE_API_BASE_URL),
   timeout: 180_000,
   headers: { Accept: "application/json" },
 });
