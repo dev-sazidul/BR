@@ -216,6 +216,8 @@ export function AdvancedImageEditor({ originalUrl, foregroundUrl, fileName, maxB
             onRotation={editor.changeRotation}
             onResize={editor.resize}
             onToggleLock={editor.toggleLock}
+            onShadow={editor.updateShadow}
+            onMatchScene={editor.setMatchScene}
           />
         </aside>
       </div>

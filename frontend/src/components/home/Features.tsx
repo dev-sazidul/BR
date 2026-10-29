@@ -1,4 +1,4 @@
-import { Image, MousePointerClick, Palette, ShieldCheck, Sparkles, Timer } from "lucide-react";
+import { Image, MousePointerClick, Palette, ShieldCheck, Sparkles, Timer, UserRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const features: Array<{ icon: LucideIcon; title: string; body: string }> = [
@@ -26,6 +26,11 @@ const features: Array<{ icon: LucideIcon; title: string; body: string }> = [
     icon: Palette,
     title: "Background editor",
     body: "After the cutout is ready, place it on a natural photo background, crop, rotate, and download. Editing stays in the browser.",
+  },
+  {
+    icon: UserRound,
+    title: "Portrait and passport sizes",
+    body: "Frame a cutout for a profile photo or a document size. Each official size stays attached to its source, and unverified sizes are marked.",
   },
   {
     icon: ShieldCheck,

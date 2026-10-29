@@ -37,7 +37,19 @@ export type EditorSnapshot = {
   height: number;
   lockAspect: boolean;
   sized: boolean;
+  shadow: ShadowSettings;
+  matchScene: boolean;
 };
+
+export type ShadowSettings = {
+  enabled: boolean;
+  intensity: number;
+  blur: number;
+  distance: number;
+  angle: number;
+};
+
+export type EdgeBackdrop = "scene" | "white" | "black" | "checker";
 
 export type ExportFormat = "png" | "jpeg" | "webp";
 

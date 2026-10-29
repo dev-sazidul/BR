@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { useDocumentTitle } from "../hooks/useObjectUrl";
 import { useAppConfig } from "../app/ConfigProvider";
 import { useBackgroundRemoval } from "../hooks/useBackgroundRemoval";
@@ -34,6 +36,11 @@ export function HomePage() {
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted sm:text-lg">
             Drop in a photo. Solva cuts out the subject and gives you a transparent PNG you can download.
+          </p>
+          <p className="mt-4 text-sm font-semibold">
+            <Link to="/portrait" className="text-brand hover:text-brand-dark">
+              Make a portrait or passport-size photo
+            </Link>
           </p>
         </div>
 

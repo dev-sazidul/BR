@@ -102,6 +102,8 @@ export function createSnapshot(width: number, height: number): EditorSnapshot {
     height: size.height,
     lockAspect: true,
     sized: false,
+    shadow: { enabled: true, intensity: 0.32, blur: 24, distance: 14, angle: 90 },
+    matchScene: true,
   };
 }
 

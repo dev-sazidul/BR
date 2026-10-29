@@ -2,8 +2,8 @@
 
 The public model files are the same weights published for rembg. This module
 does not import that package: its dependency tree includes OpenCV, SciPy, and
-Numba, which push a serverless bundle past the size limit. The default rembg
-path also applies the mask directly, without alpha matting, and so does this.
+Numba, which push a serverless bundle past the size limit. The mask is resized
+without Lanczos ringing, then the edge color is cleaned in matte.py.
 """
 
 import hashlib
@@ -17,6 +17,7 @@ from django.conf import settings
 from PIL import Image, ImageOps
 
 from apps.image_processing.exceptions import BackgroundRemovalError
+from apps.image_processing.services.matte import refine_cutout
 
 from .base import BackgroundRemovalProvider
 
@@ -143,7 +144,7 @@ def _mask(session, image: Image.Image) -> Image.Image:
         normalized = (prediction - low) / scale
     normalized = np.squeeze(normalized)
     mask = Image.fromarray((normalized.clip(0, 1) * 255).astype(np.uint8), mode="L")
-    return mask.resize(image.size, Image.Resampling.LANCZOS)
+    return mask.resize(image.size, Image.Resampling.BILINEAR)
 
 
 class RembgProvider(BackgroundRemovalProvider):
@@ -207,4 +208,4 @@ class RembgProvider(BackgroundRemovalProvider):
         if cutout is source:
             cutout = source.copy()
         cutout.putalpha(mask)
-        return cutout
+        return refine_cutout(cutout)

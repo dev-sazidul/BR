@@ -1,6 +1,6 @@
 # Solva
 
-Solva removes the background from one image and returns a transparent PNG. The page is a single upload flow: drop a picture, wait for the model, then download the cutout.
+Solva removes the background from one image and returns a transparent PNG. The page is a single upload flow: drop a picture, wait for the model, then download the cutout. A separate portrait page frames that cutout for a profile photo or a document size. Document sizes are stored with their source, and unverified sizes are marked.
 
 The interface is original. It is not a copy of remove.bg.
 

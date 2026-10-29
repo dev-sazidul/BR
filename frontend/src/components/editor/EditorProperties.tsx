@@ -1,5 +1,5 @@
 import { presetById } from "../../data/backgroundPresets";
-import type { BackgroundFit, EditorSnapshot } from "../../types/editor";
+import type { BackgroundFit, EditorSnapshot, ShadowSettings } from "../../types/editor";
 import { Button } from "../common/Button";
 
 type EditorPropertiesProps = {
@@ -8,6 +8,8 @@ type EditorPropertiesProps = {
   onRotation: (value: number, mode?: "stage" | "commit") => void;
   onResize: (edge: "width" | "height", value: number) => void;
   onToggleLock: () => void;
+  onShadow: (patch: Partial<ShadowSettings>, mode: "stage" | "commit") => void;
+  onMatchScene: (enabled: boolean) => void;
 };
 
 export function EditorProperties(props: EditorPropertiesProps) {
@@ -64,6 +66,37 @@ export function EditorProperties(props: EditorPropertiesProps) {
             <Range label="Vertical position" min={-1} max={1} step={0.02} value={background.offsetY} onChange={(value, mode) => props.onPlacement({ offsetY: value }, mode)} />
           </div>
         ) : null}
+      </section>
+      <section>
+        <h3 className="font-semibold">Shadow</h3>
+        <button
+          type="button"
+          aria-pressed={snapshot.shadow.enabled}
+          className="mt-2 w-full rounded-lg border border-line px-2 py-2 text-left text-sm font-medium"
+          onClick={() => props.onShadow({ enabled: !snapshot.shadow.enabled }, "commit")}
+        >
+          {snapshot.shadow.enabled ? "Contact shadow on" : "Contact shadow off"}
+        </button>
+        {snapshot.shadow.enabled ? (
+          <div className="mt-3 space-y-3">
+            <Range label="Shadow intensity" min={0.05} max={0.8} step={0.01} value={snapshot.shadow.intensity} onChange={(value, mode) => props.onShadow({ intensity: value }, mode)} />
+            <Range label="Shadow blur" min={0} max={80} step={1} value={snapshot.shadow.blur} onChange={(value, mode) => props.onShadow({ blur: value }, mode)} />
+            <Range label="Shadow distance" min={0} max={80} step={1} value={snapshot.shadow.distance} onChange={(value, mode) => props.onShadow({ distance: value }, mode)} />
+            <Range label="Shadow direction" min={0} max={360} step={1} value={snapshot.shadow.angle} onChange={(value, mode) => props.onShadow({ angle: value }, mode)} />
+          </div>
+        ) : null}
+      </section>
+      <section>
+        <h3 className="font-semibold">Scene match</h3>
+        <button
+          type="button"
+          aria-pressed={snapshot.matchScene}
+          className="mt-2 w-full rounded-lg border border-line px-2 py-2 text-left text-sm font-medium"
+          onClick={() => props.onMatchScene(!snapshot.matchScene)}
+        >
+          {snapshot.matchScene ? "Lighting match on" : "Lighting match off"}
+        </button>
+        <p className="mt-2 text-xs leading-5 text-muted">A small brightness adjustment. Skin color and detail stay as they are.</p>
       </section>
       <section>
         <h3 className="font-semibold">Crop</h3>

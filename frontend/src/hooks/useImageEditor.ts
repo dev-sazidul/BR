@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditorHistory } from "./useEditorHistory";
 import type { NaturalBackground } from "../data/backgroundPresets";
 import { presetById } from "../data/backgroundPresets";
-import type { AspectId, BackgroundFit, CropNorm, EditorSnapshot, EditorTool, ExportFormat, ExportMode } from "../types/editor";
+import type { AspectId, BackgroundFit, CropNorm, EditorSnapshot, EditorTool, ExportFormat, ExportMode, ShadowSettings } from "../types/editor";
 import { editedFilename, exportEditedImage } from "../utils/imageExport";
 import {
   ASPECT_RATIOS,
@@ -177,6 +177,24 @@ export function useImageEditor(foregroundUrl: string, maxBytes: number, fileName
     [commitHistory, stage],
   );
 
+  const updateShadow = useCallback(
+    (patch: Partial<ShadowSettings>, mode: "stage" | "commit") => {
+      const current = presentRef.current;
+      if (!current) return;
+      const next: EditorSnapshot = { ...current, shadow: { ...current.shadow, ...patch } };
+      if (mode === "stage") stage(next);
+      else commitHistory(next);
+    },
+    [commitHistory, stage],
+  );
+
+  const setMatchScene = useCallback(
+    (matchScene: boolean) => {
+      commit((current) => ({ ...current, matchScene }));
+    },
+    [commit],
+  );
+
   const changeRotation = useCallback(
     (rotation: number, mode: "stage" | "commit" = "commit") => {
       const current = presentRef.current;
@@ -263,6 +281,8 @@ export function useImageEditor(foregroundUrl: string, maxBytes: number, fileName
     uploadBackground,
     clearBackgroundImage,
     placeBackground,
+    updateShadow,
+    setMatchScene,
     changeRotation,
     applyCrop,
     resize,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createSnapshot } from "./imageGeometry";
-import { paintComposition } from "./imageComposition";
+import { lightingScale, paintComposition, shadowStrength } from "./imageComposition";
 import { editedFilename, exportPlan } from "./imageExport";
 
 function fakeContext(ops: string[]) {
@@ -74,5 +74,13 @@ describe("image composition", () => {
       underlay: null,
     });
     expect(editedFilename("portrait.png", "jpeg")).toBe("portrait-edit.jpg");
+  });
+
+  it("keeps scene lighting inside a small range and softens shadows on dark backgrounds", () => {
+    expect(lightingScale(0.5, 0.5)).toBe(1);
+    expect(lightingScale(0.2, 0.9)).toBeCloseTo(1.06);
+    expect(lightingScale(0.9, 0.2)).toBeCloseTo(0.94);
+    expect(shadowStrength(0.32, 0.85)).toBeGreaterThan(shadowStrength(0.32, 0.15));
+    expect(shadowStrength(1, 1)).toBeLessThanOrEqual(0.42);
   });
 });

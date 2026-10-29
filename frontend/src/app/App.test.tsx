@@ -167,6 +167,32 @@ describe("Solva app", () => {
     expect(screen.queryByRole("menuitem", { name: "Sign in" })).not.toBeInTheDocument();
   });
 
+  it("shows sourced portrait sizes and marks an unverified document", async () => {
+    const user = userEvent.setup();
+    renderAt("/portrait");
+    expect(await screen.findByRole("heading", { name: "Portrait and passport photos" })).toBeInTheDocument();
+    expect(screen.getByText(/does not certify/i)).toBeInTheDocument();
+    expect(screen.getByText("Solva framing guide. This is not an official document size.")).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Passport and ID" }));
+    expect(screen.getByText("600 × 600 px")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Other background colour"), { target: { value: "#0000ff" } });
+    expect(screen.getByText(/left as you chose it/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("option", { name: "Bangladesh" }));
+    await user.selectOptions(screen.getByLabelText("Document type"), "Adult passport photo");
+    expect(screen.getByText(/not an official Bangladesh passport size/i)).toBeInTheDocument();
+    expect(screen.getByText(/Do not treat this size as officially compliant/i)).toBeInTheDocument();
+  });
+
+  it("rejects an invalid portrait upload before calling the API", async () => {
+    renderAt("/portrait");
+    await screen.findByRole("heading", { name: "Portrait and passport photos" });
+    const dropzone = screen.getByText("Drag an image here").parentElement;
+    if (!dropzone) throw new Error("Dropzone was not found.");
+    fireEvent.drop(dropzone, { dataTransfer: { files: [new File(["hello"], "notes.txt", { type: "text/plain" })] } });
+    expect(await screen.findByRole("alert")).toHaveTextContent(/PNG, JPG, or WebP/);
+    expect(removeBackground).not.toHaveBeenCalled();
+  });
+
   it("renders the not found page", async () => {
     renderAt("/missing");
     expect(await screen.findByRole("heading", { name: "Page not found" })).toBeInTheDocument();

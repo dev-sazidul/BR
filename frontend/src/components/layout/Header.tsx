@@ -8,9 +8,10 @@ import { MoreMenu } from "../account/MoreMenu";
 import { UserAvatar } from "../account/UserAvatar";
 
 const links = [
-  { href: "/#remove", label: "Remove background", id: "remove" },
-  { href: "/#how-it-works", label: "How it works", id: "how-it-works" },
-  { href: "/#features", label: "Features", id: "features" },
+  { href: "/#remove", label: "Remove background", id: "remove", hash: true },
+  { href: "/portrait", label: "Portraits", id: "portrait", hash: false },
+  { href: "/#how-it-works", label: "How it works", id: "how-it-works", hash: true },
+  { href: "/#features", label: "Features", id: "features", hash: true },
 ];
 
 const moreLinks = [
@@ -50,7 +51,14 @@ export function Header() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const section = location.pathname === "/" ? location.hash.replace("#", "") : "";
-  const activeId = section === "how-it-works" || section === "features" ? section : location.pathname === "/" ? "remove" : "";
+  const activeId =
+    location.pathname === "/portrait"
+      ? "portrait"
+      : section === "how-it-works" || section === "features"
+        ? section
+        : location.pathname === "/"
+          ? "remove"
+          : "";
 
   useEffect(() => {
     setOpen(false);
@@ -78,7 +86,9 @@ export function Header() {
               to={link.href}
               className={navLinkClass(activeId === link.id)}
               aria-current={activeId === link.id ? "page" : undefined}
-              onClick={() => scrollToId(link.id)}
+              onClick={() => {
+                if (link.hash) scrollToId(link.id);
+              }}
             >
               {link.label}
             </Link>
@@ -125,7 +135,9 @@ export function Header() {
                 key={link.id}
                 to={link.href}
                 className={cn("rounded-md px-2 py-2", activeId === link.id ? "text-brand" : "text-ink/80")}
-                onClick={() => scrollToId(link.id)}
+                onClick={() => {
+                  if (link.hash) scrollToId(link.id);
+                }}
               >
                 {link.label}
               </Link>

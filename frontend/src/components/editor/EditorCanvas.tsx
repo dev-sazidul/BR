@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import type { CropNorm, EditorSnapshot } from "../../types/editor";
+import type { CropNorm, EdgeBackdrop, EditorSnapshot } from "../../types/editor";
 import { cn } from "../../utils/cn";
 import { paintComposition } from "../../utils/imageComposition";
 import { fittedSize } from "../../utils/imageGeometry";
@@ -41,7 +41,17 @@ export function EditorCanvas({
 }: EditorCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const transparent = snapshot.background.type === "transparent";
+  const [backdrop, setBackdrop] = useState<EdgeBackdrop>("scene");
+  const backgroundKey =
+    snapshot.background.type === "image"
+      ? snapshot.background.url
+      : snapshot.background.type === "color"
+        ? snapshot.background.color
+        : snapshot.background.type;
+  useEffect(() => {
+    setBackdrop("scene");
+  }, [backgroundKey]);
+  const transparent = backdrop === "checker" || (backdrop === "scene" && snapshot.background.type === "transparent");
   const logical =
     cropping && rotatedFrame
       ? fittedSize(rotatedFrame.width, rotatedFrame.height, PREVIEW_EDGE)
@@ -58,14 +68,17 @@ export function EditorCanvas({
     canvas.style.height = `${logical.height}px`;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const scene = backdrop === "scene";
+    const includeBackground = scene && paintSnapshot.background.type !== "transparent";
+    const underlay = backdrop === "white" ? "#FFFFFF" : backdrop === "black" ? "#000000" : null;
     paintComposition(ctx, {
       foreground: { width: foreground.naturalWidth, height: foreground.naturalHeight, source: foreground },
       backgroundImage: backgroundImage
         ? { width: backgroundImage.naturalWidth, height: backgroundImage.naturalHeight, source: backgroundImage }
         : null,
       snapshot: paintSnapshot,
-      includeBackground: paintSnapshot.background.type !== "transparent",
-      underlay: null,
+      includeBackground,
+      underlay,
       destWidth: logical.width,
       destHeight: logical.height,
       scale,
@@ -80,7 +93,7 @@ export function EditorCanvas({
     } catch {
       setPreviewUrl(null);
     }
-  }, [backgroundImage, comparing, cropping, foreground, logical.height, logical.width, snapshot]);
+  }, [backdrop, backgroundImage, comparing, cropping, foreground, logical.height, logical.width, snapshot]);
 
   return (
     <div className="min-w-0">
@@ -97,6 +110,38 @@ export function EditorCanvas({
         <Button variant="ghost" onClick={() => onZoom(1)}>
           Fit
         </Button>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setBackdrop("white");
+            onZoom(2);
+          }}
+        >
+          Inspect edges
+        </Button>
+      </div>
+      <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Edge preview">
+        {(
+          [
+            ["scene", "Scene"],
+            ["white", "White"],
+            ["black", "Black"],
+            ["checker", "Checkerboard"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={backdrop === id}
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-semibold",
+              backdrop === id ? "border-brand bg-brand text-white" : "border-line bg-white",
+            )}
+            onClick={() => setBackdrop(id)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
       <div className="overflow-auto rounded-2xl border border-line bg-paper p-4">
         <div

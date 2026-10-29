@@ -9,6 +9,7 @@ import { ContactPage } from "../pages/ContactPage";
 import { ForgotPasswordPage } from "../pages/ForgotPasswordPage";
 import { HomePage } from "../pages/HomePage";
 import { NotFoundPage } from "../pages/NotFoundPage";
+import { PortraitPage } from "../pages/PortraitPage";
 import { PrivacyPage } from "../pages/PrivacyPage";
 import { ProfilePage } from "../pages/ProfilePage";
 import { RegisterPage } from "../pages/RegisterPage";
@@ -23,6 +24,7 @@ export default function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/portrait" element={<PortraitPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
