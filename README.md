@@ -66,6 +66,8 @@ Open http://127.0.0.1:5173. Vite proxies `/api` to http://127.0.0.1:8000. Copy `
 
 Accounts are optional. Guests can still upload, preview, and download. A signed-in browser keeps the API token in `localStorage` when Remember me is on, and in `sessionStorage` when it is off. The token is sent only to `/api/v1/auth/` routes that need it, so a stale token does not block background removal. Run `python manage.py migrate` after pulling this feature so the email field and token table exist.
 
+After a cutout is ready, Edit image opens a browser-side editor. Natural background photographs, a background photo from the device, a solid color, crop, rotate, resize, undo, and export reuse the transparent PNG already returned by the API. They do not call the removal service again. The built-in photographs are resized copies of Wikimedia Commons files and each one keeps its author and license in the editor. PNG export can keep the alpha channel. JPG export flattens onto the selected background, or white when the background is transparent.
+
 Password reset emails use Django's mail settings. In development they print to the console. In production, set `EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL`, and `FRONTEND_ORIGIN` to the public site origin, or the reset link is not delivered. When the site and API are on different hosts, add the site origin to `DJANGO_CORS_ALLOWED_ORIGINS`. On Vercel without Postgres, SQLite lives in `/tmp` and accounts do not survive a new instance. Use Postgres if accounts should last.
 
 ### AI model

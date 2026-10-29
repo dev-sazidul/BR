@@ -37,7 +37,7 @@ export function HomePage() {
           </p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-4xl">
+        <div className="mx-auto mt-10 max-w-6xl">
           {health && !health.ai.available ? (
             <div className="mb-4">
               <ErrorBanner>
@@ -63,6 +63,7 @@ export function HomePage() {
               onReplace={(file) => void removal.start(file)}
               onDownloadPng={removal.downloadPng}
               onDownloadJpg={(background) => void removal.downloadJpg(background)}
+              maxUploadBytes={config.max_upload_bytes}
             />
           ) : (
             <div className="space-y-4">

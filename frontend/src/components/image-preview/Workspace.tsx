@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { BackgroundPicker } from "./BackgroundPicker";
 import { ComparisonSlider } from "./ComparisonSlider";
+import { AdvancedImageEditor } from "../editor/AdvancedImageEditor";
 import { Button } from "../common/Button";
 import { ErrorBanner } from "../common/ErrorBanner";
 import { Spinner } from "../common/Spinner";
@@ -27,6 +28,7 @@ type WorkspaceProps = {
   onReplace: (file: File) => void;
   onDownloadPng: () => void;
   onDownloadJpg: (background: string) => void;
+  maxUploadBytes: number;
 };
 
 export function Workspace({
@@ -45,13 +47,19 @@ export function Workspace({
   onReplace,
   onDownloadPng,
   onDownloadJpg,
+  maxUploadBytes,
 }: WorkspaceProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<"split" | "slider">("split");
   const [background, setBackground] = useState<string | null>(null);
   const [custom, setCustom] = useState("#F4EDE4");
+  const [editorOpen, setEditorOpen] = useState(false);
   const expiry = meta ? formatExpiry(meta.expires_at) : null;
   const jpgColor = background ?? "#FFFFFF";
+
+  useEffect(() => {
+    setEditorOpen(false);
+  }, [resultUrl]);
 
   return (
     <div className="rise rounded-3xl border border-line bg-white p-4 shadow-card sm:p-6">
@@ -63,13 +71,16 @@ export function Workspace({
             {meta ? ` · ${meta.width}×${meta.height}` : ""}
           </p>
         </div>
-        {resultUrl ? (
+        {resultUrl && !editorOpen ? (
           <div className="inline-flex rounded-full border border-line p-1" role="group" aria-label="Preview layout">
             <ViewButton pressed={view === "split"} onClick={() => setView("split")}>
               Side by side
             </ViewButton>
             <ViewButton pressed={view === "slider"} onClick={() => setView("slider")}>
               Slider
+            </ViewButton>
+            <ViewButton pressed={false} onClick={() => setEditorOpen(true)}>
+              Edit image
             </ViewButton>
           </div>
         ) : null}
@@ -89,7 +100,15 @@ export function Workspace({
       ) : null}
 
       <div className="mt-5">
-        {resultUrl && originalUrl && view === "slider" ? (
+        {resultUrl && originalUrl && editorOpen ? (
+          <AdvancedImageEditor
+            originalUrl={originalUrl}
+            foregroundUrl={resultUrl}
+            fileName={fileName}
+            maxBytes={maxUploadBytes}
+            onClose={() => setEditorOpen(false)}
+          />
+        ) : resultUrl && originalUrl && view === "slider" ? (
           <ComparisonSlider before={originalUrl} after={resultUrl} background={background} />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -110,7 +129,7 @@ export function Workspace({
         )}
       </div>
 
-      {resultUrl ? (
+      {resultUrl && !editorOpen ? (
         <div className="mt-5">
           <BackgroundPicker
             value={background}
@@ -123,17 +142,21 @@ export function Workspace({
       ) : null}
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Button onClick={onDownloadPng} disabled={!resultUrl || busy}>
-          Download PNG
-        </Button>
-        <Button
-          variant="secondary"
-          disabled={!resultUrl || busy || jpgBusy}
-          onClick={() => onDownloadJpg(jpgColor)}
-        >
-          {jpgBusy ? <Spinner /> : null}
-          {background ? "Download JPG" : "Download JPG on white"}
-        </Button>
+        {!editorOpen ? (
+          <Button onClick={onDownloadPng} disabled={!resultUrl || busy}>
+            Download PNG
+          </Button>
+        ) : null}
+        {!editorOpen ? (
+          <Button
+            variant="secondary"
+            disabled={!resultUrl || busy || jpgBusy}
+            onClick={() => onDownloadJpg(jpgColor)}
+          >
+            {jpgBusy ? <Spinner /> : null}
+            {background ? "Download JPG" : "Download JPG on white"}
+          </Button>
+        ) : null}
         <Button variant="secondary" disabled={busy} onClick={() => inputRef.current?.click()}>
           Upload another
         </Button>

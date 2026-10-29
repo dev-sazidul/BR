@@ -103,6 +103,7 @@ describe("Solva app", () => {
 
     expect(await screen.findByRole("img", { name: "Background removed" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Selected image" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit image" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Slider" }));
     expect(screen.getByRole("slider", { name: "Compare the original image and the cutout" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Download PNG" }));

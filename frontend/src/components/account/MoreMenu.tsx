@@ -36,7 +36,7 @@ export function MoreMenu() {
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        className="grid h-10 w-10 place-items-center rounded-full border border-line bg-white text-ink hover:bg-paper"
+        className="grid h-9 w-9 place-items-center rounded-md text-ink hover:bg-paper"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}

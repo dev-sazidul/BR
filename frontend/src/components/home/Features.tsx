@@ -1,4 +1,4 @@
-import { Image, MousePointerClick, ShieldCheck, Sparkles, Timer } from "lucide-react";
+import { Image, MousePointerClick, Palette, ShieldCheck, Sparkles, Timer } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const features: Array<{ icon: LucideIcon; title: string; body: string }> = [
@@ -21,6 +21,11 @@ const features: Array<{ icon: LucideIcon; title: string; body: string }> = [
     icon: Timer,
     title: "Clear progress",
     body: "The page tells you when the file is uploading and when the model is working.",
+  },
+  {
+    icon: Palette,
+    title: "Background editor",
+    body: "After the cutout is ready, place it on a natural photo background, crop, rotate, and download. Editing stays in the browser.",
   },
   {
     icon: ShieldCheck,

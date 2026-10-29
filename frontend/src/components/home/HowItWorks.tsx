@@ -9,7 +9,7 @@ const steps = [
   },
   {
     title: "Preview and download the result",
-    body: "Compare the cutout, then download a transparent PNG or a JPG on a solid color.",
+    body: "Compare the cutout, edit the background, then download a transparent PNG or a flattened JPG.",
   },
 ];
 
