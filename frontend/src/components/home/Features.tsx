@@ -25,7 +25,7 @@ const features: Array<{ icon: LucideIcon; title: string; body: string }> = [
   {
     icon: ShieldCheck,
     title: "Careful image handling",
-    body: "There is no account. The original upload is not saved, and results are kept only for a short time.",
+    body: "An account is optional, and uploads are not saved to it. The original file is not stored, and results are kept only for a short time.",
   },
 ];
 

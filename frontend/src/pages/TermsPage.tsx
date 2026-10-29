@@ -16,8 +16,7 @@ export function TermsPage() {
       </p>
       <p>
         Background removal is imperfect. Solva does not guarantee that every background will be removed, or that the
-        cutout will be suitable for a particular use. There is no account, credit system, or payment plan in this
-        version. Reserved areas may later show Google ads. Those ads are separate from background removal, and the
+        cutout will be suitable for a particular use. An account is optional. There is no credit system or payment plan. Reserved areas may later show Google ads. Those ads are separate from background removal, and the
         tool works if they never load.
       </p>
       <p>

@@ -21,6 +21,13 @@ The interface is original. It is not a copy of remove.bg.
 | `GET` | `/api/v1/images/results/<token>/` | Inline transparent PNG. |
 | `GET` | `/api/v1/images/results/<token>/download/?format=png` | PNG download. |
 | `GET` | `/api/v1/images/results/<token>/download/?format=jpeg&background=%23FFFFFF` | JPEG flattened onto a hex color. |
+| `POST` | `/api/v1/auth/register/` | Optional account. Returns a token and the profile. |
+| `POST` | `/api/v1/auth/login/` | Returns a token. Send it as `Authorization: Token <token>` on account routes only. |
+| `POST` | `/api/v1/auth/logout/` | Deletes that token. |
+| `GET` / `PATCH` / `DELETE` | `/api/v1/auth/me/` | Read or update the signed-in profile, or delete the account. |
+| `POST` | `/api/v1/auth/change-password/` | Replaces the password and issues a new token. |
+| `POST` | `/api/v1/auth/password-reset/` | Emails a reset link when mail is configured. The response does not say whether the email exists. |
+| `POST` | `/api/v1/auth/password-reset/confirm/` | Sets a new password from the link. |
 | `GET` | `/api/schema/` | OpenAPI schema (YAML). |
 | `GET` | `/api/docs/` | Swagger UI. |
 
@@ -56,6 +63,10 @@ npm run dev
 ```
 
 Open http://127.0.0.1:5173. Vite proxies `/api` to http://127.0.0.1:8000. Copy `backend/.env.example` to `backend/.env` only when you need to override a setting.
+
+Accounts are optional. Guests can still upload, preview, and download. A signed-in browser keeps the API token in `localStorage` when Remember me is on, and in `sessionStorage` when it is off. The token is sent only to `/api/v1/auth/` routes that need it, so a stale token does not block background removal. Run `python manage.py migrate` after pulling this feature so the email field and token table exist.
+
+Password reset emails use Django's mail settings. In development they print to the console. In production, set `EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL`, and `FRONTEND_ORIGIN` to the public site origin, or the reset link is not delivered. When the site and API are on different hosts, add the site origin to `DJANGO_CORS_ALLOWED_ORIGINS`. On Vercel without Postgres, SQLite lives in `/tmp` and accounts do not survive a new instance. Use Postgres if accounts should last.
 
 ### AI model
 

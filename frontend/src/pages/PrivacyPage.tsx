@@ -13,9 +13,10 @@ export function PrivacyPage() {
   return (
     <TextPage title="Privacy">
       <p>
-        Solva does not ask you to create an account. A removal request includes the image you upload and, on the
-        server, a log line with the time, result size, and processing outcome. The log does not include the image
-        itself.
+        Solva does not require an account. If you create one, the server stores your name, email, and a hashed
+        password. It does not store your password itself, and it does not attach uploads to your account. A removal
+        request includes the image you upload and, on the server, a log line with the time, result size, and processing
+        outcome. The log does not include the image itself.
       </p>
       <p>
         The original upload is processed in memory and is not saved. The transparent PNG result is stored under a

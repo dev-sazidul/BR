@@ -2,6 +2,9 @@ import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
+import { useAuth } from "../../auth/AuthProvider";
+import { MoreMenu } from "../account/MoreMenu";
+import { UserAvatar } from "../account/UserAvatar";
 import { buttonClass } from "../common/Button";
 
 const links = [
@@ -29,6 +32,7 @@ export function Logo() {
 
 export function Header() {
   const location = useLocation();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -63,16 +67,25 @@ export function Header() {
             Remove background
           </Link>
         </nav>
-        <button
-          type="button"
-          className="grid h-10 w-10 place-items-center rounded-full border border-line md:hidden"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          onClick={() => setOpen((value) => !value)}
-        >
-          <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
-          {open ? <X aria-hidden="true" size={18} /> : <Menu aria-hidden="true" size={18} />}
-        </button>
+        <div className="flex items-center gap-2">
+          {user ? (
+            <span className="hidden max-w-40 items-center gap-2 sm:inline-flex">
+              <UserAvatar name={user.name} />
+              <span className="truncate text-sm font-medium">{user.name}</span>
+            </span>
+          ) : null}
+          <MoreMenu />
+          <button
+            type="button"
+            className="grid h-10 w-10 place-items-center rounded-full border border-line md:hidden"
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            onClick={() => setOpen((value) => !value)}
+          >
+            <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
+            {open ? <X aria-hidden="true" size={18} /> : <Menu aria-hidden="true" size={18} />}
+          </button>
+        </div>
       </div>
       {open ? (
         <nav id="mobile-nav" className="border-t border-line px-5 py-4 md:hidden" aria-label="Mobile">

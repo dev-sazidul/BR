@@ -49,6 +49,8 @@ function renderAt(path = "/") {
 
 describe("Solva app", () => {
   beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
     vi.mocked(fetchPublicConfig).mockResolvedValue(config);
     vi.mocked(fetchHealth).mockResolvedValue(health);
     vi.mocked(removeBackground).mockReset();
@@ -150,6 +152,18 @@ describe("Solva app", () => {
     renderAt("/contact");
     expect(await screen.findByText(/has not been published/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /send/i })).not.toBeInTheDocument();
+  });
+
+  it("opens the account menu without requiring a sign-in", async () => {
+    const user = userEvent.setup();
+    renderAt();
+    await user.click(screen.getByRole("button", { name: "Account menu" }));
+    expect(screen.queryByRole("menuitem", { name: "Profile" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Account settings" })).not.toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Create account" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menuitem", { name: "Sign in" })).not.toBeInTheDocument();
   });
 
   it("renders the not found page", async () => {

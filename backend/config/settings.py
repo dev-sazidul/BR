@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "rest_framework.authtoken",
     "drf_spectacular",
     "apps.accounts",
     "apps.image_processing",
@@ -218,8 +219,23 @@ AI_HTTP_TIMEOUT_SECONDS = env_int("AI_HTTP_TIMEOUT_SECONDS", 60)
 
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "").strip()
 
+EMAIL_BACKEND = os.environ.get(
+    "DJANGO_EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend"
+    if DJANGO_ENV != "production"
+    else "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT = env_int("EMAIL_PORT", 587)
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "Solva <noreply@localhost>")
+FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://127.0.0.1:5173").rstrip("/")
+
 DISABLE_THROTTLING = env_bool("DISABLE_THROTTLING", False)
 BACKGROUND_REMOVAL_THROTTLE = os.environ.get("BACKGROUND_REMOVAL_THROTTLE", "10/minute")
+AUTH_THROTTLE = os.environ.get("AUTH_THROTTLE", "8/minute")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
@@ -237,15 +253,16 @@ REST_FRAMEWORK = {
     "URL_FORMAT_OVERRIDE": None,
     "DEFAULT_THROTTLE_RATES": {
         "background_removal": BACKGROUND_REMOVAL_THROTTLE,
+        "auth": AUTH_THROTTLE,
     },
 }
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Solva API",
     "DESCRIPTION": (
-        "Anonymous background removal. Upload one image, then preview or download the cutout "
-        "from the signed URLs. The original file is not stored. "
-        "Open the interactive docs at /api/docs/."
+        "Anonymous background removal, plus optional accounts. Upload one image, then preview "
+        "or download the cutout from the signed URLs. The original file is not stored, and "
+        "uploads are not attached to an account. Open the interactive docs at /api/docs/."
     ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
@@ -254,6 +271,7 @@ SPECTACULAR_SETTINGS = {
     "TAGS": [
         {"name": "System", "description": "Health and public limits. No secrets."},
         {"name": "Images", "description": "Upload, preview, and download one cutout."},
+        {"name": "Accounts", "description": "Optional registration, sign-in, and profile."},
     ],
 }
 

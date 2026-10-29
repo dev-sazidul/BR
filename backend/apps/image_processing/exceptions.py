@@ -64,6 +64,26 @@ def error_response(code: str, message: str, status_code: int, details: dict | No
     return Response(error_payload(code, message, details), status=status_code)
 
 
+def _error_messages(data) -> list[str]:
+    if data is None:
+        return []
+    if isinstance(data, str):
+        text = data.strip()
+        return [text] if text else []
+    if isinstance(data, (list, tuple)):
+        messages: list[str] = []
+        for item in data:
+            messages.extend(_error_messages(item))
+        return messages
+    if isinstance(data, dict):
+        messages = []
+        for value in data.values():
+            messages.extend(_error_messages(value))
+        return messages
+    text = str(data).strip()
+    return [text] if text else []
+
+
 def api_exception_handler(exc, context):
     if isinstance(exc, RequestDataTooBig):
         return error_response(
@@ -95,8 +115,12 @@ def api_exception_handler(exc, context):
         details = {"wait_seconds": int(wait) if wait else 0}
     elif isinstance(exc, ValidationError):
         code = "invalid_request"
-        message = "The upload could not be read. Choose a PNG, JPG, or WebP image."
         details = {"fields": response.data}
+        if isinstance(response.data, dict) and "image" in response.data:
+            message = "The upload could not be read. Choose a PNG, JPG, or WebP image."
+        else:
+            messages = _error_messages(response.data)
+            message = messages[0] if messages else "Check the form and try again."
     elif response.status_code == status.HTTP_404_NOT_FOUND:
         code = "not_found"
         message = "That resource was not found."

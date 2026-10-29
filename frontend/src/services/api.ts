@@ -1,6 +1,14 @@
 import axios from "axios";
 
+import { readToken } from "../auth/storage";
 import type { ApiErrorBody } from "../types/api";
+
+const AUTHENTICATED_PATHS = ["/api/v1/auth/logout/", "/api/v1/auth/me/", "/api/v1/auth/change-password/"];
+
+function needsAccountToken(url: string | undefined): boolean {
+  if (!url) return false;
+  return AUTHENTICATED_PATHS.some((path) => url.startsWith(path));
+}
 
 export function apiBaseUrl(value: string | undefined): string {
   const raw = (value || "").trim().replace(/\/$/, "");
@@ -11,6 +19,13 @@ export const api = axios.create({
   baseURL: apiBaseUrl(import.meta.env.VITE_API_BASE_URL),
   timeout: 180_000,
   headers: { Accept: "application/json" },
+});
+
+api.interceptors.request.use((config) => {
+  if (!needsAccountToken(config.url)) return config;
+  const token = readToken();
+  if (token) config.headers.Authorization = `Token ${token}`;
+  return config;
 });
 
 export function getErrorMessage(error: unknown): string {
