@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import { RegisterForm } from "./RegisterForm";
@@ -9,11 +8,7 @@ describe("RegisterForm", () => {
   it("rejects passwords that do not match", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
-    render(
-      <MemoryRouter>
-        <RegisterForm onSubmit={onSubmit} />
-      </MemoryRouter>,
-    );
+    render(<RegisterForm onSubmit={onSubmit} />);
     await user.type(screen.getByLabelText("Full name"), "Ada Lovelace");
     await user.type(screen.getByLabelText("Email address"), "ada@example.com");
     await user.type(

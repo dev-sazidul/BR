@@ -82,7 +82,10 @@ services:
   web:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
       args:
+        API_PROXY_TARGET: http://backend:8000
+        SITE_URL: ${SITE_URL:-http://localhost:8080}
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
         VITE_ADSENSE_CLIENT_ID: ${VITE_ADSENSE_CLIENT_ID:-}
         VITE_ADSENSE_ENABLED: ${VITE_ADSENSE_ENABLED:-}
@@ -92,8 +95,13 @@ services:
         VITE_ADSENSE_SLOT_WORKSPACE: ${VITE_ADSENSE_SLOT_WORKSPACE:-}
         VITE_ADSENSE_SLOT_MID: ${VITE_ADSENSE_SLOT_MID:-}
         VITE_ADSENSE_SLOT_FOOTER: ${VITE_ADSENSE_SLOT_FOOTER:-}
+    environment:
+      PORT: 8080
+      API_PROXY_TARGET: http://backend:8000
+      SITE_URL: ${SITE_URL:-http://localhost:8080}
+      TRUST_PROXY_HEADERS: "true"
     ports:
-      - "8080:80"
+      - "8080:8080"
     depends_on:
       backend:
         condition: service_healthy

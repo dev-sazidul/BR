@@ -8,10 +8,13 @@ export function ProtectedAccountRoute({ children }: { children: ReactNode }) {
   const { status, user } = useAuth();
   if (status === "loading") {
     return (
-      <p role="status" className="mx-auto flex w-full max-w-md items-center gap-2 px-5 py-16 text-sm text-muted">
-        <Spinner />
-        Checking your account…
-      </p>
+      <section className="mx-auto w-full max-w-md px-5 py-16">
+        <h1 className="sr-only">Account settings</h1>
+        <p role="status" className="flex items-center gap-2 text-sm text-muted">
+          <Spinner />
+          Checking your account…
+        </p>
+      </section>
     );
   }
   if (!user) {

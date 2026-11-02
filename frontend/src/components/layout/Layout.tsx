@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "../../lib/navigation";
 
 import { AdConsentNotice } from "../ads/AdConsentNotice";
 import { AdConsentProvider } from "../ads/AdConsentProvider";
@@ -22,7 +22,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <AdConsentProvider>
-      <div className="flex min-h-screen flex-col bg-paper text-ink">
+      <div className="flex min-h-screen min-w-0 flex-col bg-paper text-ink">
         <a
           href="#content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white focus:px-4 focus:py-2"
@@ -35,7 +35,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
         <AdConsentNotice />
         <AdSenseLoader />
-        <main id="content" className="flex-1">
+        <main id="content" className="min-w-0 flex-1">
           {children}
         </main>
         <div className="pb-8 pt-4">

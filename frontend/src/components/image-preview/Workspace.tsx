@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import { BackgroundPicker } from "./BackgroundPicker";
 import { ComparisonSlider } from "./ComparisonSlider";
-import { AdvancedImageEditor } from "../editor/AdvancedImageEditor";
 import { Button } from "../common/Button";
 import { ErrorBanner } from "../common/ErrorBanner";
 import { Spinner } from "../common/Spinner";
@@ -11,6 +10,10 @@ import type { RemovalResult } from "../../types/api";
 import { cn } from "../../utils/cn";
 import { formatExpiry } from "../../utils/download";
 import { FILE_ACCEPT } from "../../utils/validateFile";
+
+const AdvancedImageEditor = lazy(() =>
+  import("../editor/AdvancedImageEditor").then((module) => ({ default: module.AdvancedImageEditor })),
+);
 
 type WorkspaceProps = {
   fileName: string;
@@ -64,15 +67,15 @@ export function Workspace({
   return (
     <div className="rise rounded-3xl border border-line bg-white p-4 shadow-card sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h2 className="text-lg font-semibold">Your image</h2>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 break-words text-sm text-muted">
             {fileName}
             {meta ? ` · ${meta.width}×${meta.height}` : ""}
           </p>
         </div>
         {resultUrl && !editorOpen ? (
-          <div className="inline-flex rounded-full border border-line p-1" role="group" aria-label="Preview layout">
+          <div className="inline-flex max-w-full flex-wrap rounded-full border border-line p-1" role="group" aria-label="Preview layout">
             <ViewButton pressed={view === "split"} onClick={() => setView("split")}>
               Side by side
             </ViewButton>
@@ -101,13 +104,22 @@ export function Workspace({
 
       <div className="mt-5">
         {resultUrl && originalUrl && editorOpen ? (
-          <AdvancedImageEditor
-            originalUrl={originalUrl}
-            foregroundUrl={resultUrl}
-            fileName={fileName}
-            maxBytes={maxUploadBytes}
-            onClose={() => setEditorOpen(false)}
-          />
+          <Suspense
+            fallback={
+              <p role="status" className="flex min-h-48 items-center justify-center gap-2 text-sm font-medium text-brand-dark">
+                <Spinner />
+                Opening the editor…
+              </p>
+            }
+          >
+            <AdvancedImageEditor
+              originalUrl={originalUrl}
+              foregroundUrl={resultUrl}
+              fileName={fileName}
+              maxBytes={maxUploadBytes}
+              onClose={() => setEditorOpen(false)}
+            />
+          </Suspense>
         ) : resultUrl && originalUrl && view === "slider" ? (
           <ComparisonSlider before={originalUrl} after={resultUrl} background={background} />
         ) : (

@@ -13,7 +13,7 @@ module.exports = {
     sourceType: "module",
     ecmaFeatures: { jsx: true },
   },
-  ignorePatterns: ["dist", "node_modules"],
+  ignorePatterns: ["dist", "node_modules", ".next"],
   rules: {
     "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
   },

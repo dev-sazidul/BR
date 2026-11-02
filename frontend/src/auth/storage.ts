@@ -2,6 +2,7 @@ const LOCAL_KEY = "solva.auth.token";
 const SESSION_KEY = "solva.auth.session";
 
 export function readToken(): string | null {
+  if (typeof localStorage === "undefined") return null;
   return localStorage.getItem(LOCAL_KEY) || sessionStorage.getItem(SESSION_KEY);
 }
 

@@ -15,8 +15,14 @@ export function apiBaseUrl(value: string | undefined): string {
   return raw.replace(/\/api\/v1$/, "");
 }
 
+function configuredApiBase(): string | undefined {
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) return process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (typeof process === "undefined") return undefined;
+  return process.env.VITE_API_BASE_URL;
+}
+
 export const api = axios.create({
-  baseURL: apiBaseUrl(import.meta.env.VITE_API_BASE_URL),
+  baseURL: apiBaseUrl(configuredApiBase()),
   timeout: 180_000,
   headers: { Accept: "application/json" },
 });

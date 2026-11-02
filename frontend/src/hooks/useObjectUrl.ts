@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { formatDocumentTitle } from "../seo/metadata";
+
 export function useObjectUrl(blob: Blob | null): string | null {
   const [url, setUrl] = useState<string | null>(null);
 
@@ -21,7 +23,7 @@ export function useObjectUrl(blob: Blob | null): string | null {
 export function useDocumentTitle(title: string): void {
   useEffect(() => {
     const previous = document.title;
-    document.title = title === "Home" ? "Solva — Remove Image Backgrounds" : `${title} — Solva`;
+    document.title = formatDocumentTitle(title);
     return () => {
       document.title = previous;
     };

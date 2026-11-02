@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "../../lib/navigation";
 
 import { readErrorMessage } from "../../services/api";
 import { Button } from "../common/Button";

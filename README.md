@@ -6,7 +6,8 @@ The interface is original. It is not a copy of remove.bg.
 
 ## Stack
 
-- React, TypeScript, Vite, Tailwind CSS, React Router, Axios
+- Next.js, React, TypeScript, Tailwind CSS, Axios
+- Next.js renders the pages and proxies `/api` to Django
 - Django, Django REST Framework, Pillow
 - Background removal with ONNX Runtime and the public U²-Net weights, behind a small provider interface
 - Optional PostgreSQL, Redis, and Celery. Anonymous removal does not need them.
@@ -62,7 +63,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. Vite proxies `/api` to http://127.0.0.1:8000. Copy `backend/.env.example` to `backend/.env` only when you need to override a setting.
+Open http://127.0.0.1:5173. Next.js renders each page and proxies `/api` to http://127.0.0.1:8000. Copy `backend/.env.example` to `backend/.env` only when you need to override a setting. Set `SITE_URL` when the public origin is not the request host. Set `API_PROXY_TARGET` when Django is not on http://127.0.0.1:8000.
 
 Accounts are optional. Guests can still upload, preview, and download. A signed-in browser keeps the API token in `localStorage` when Remember me is on, and in `sessionStorage` when it is off. The token is sent only to `/api/v1/auth/` routes that need it, so a stale token does not block background removal. Run `python manage.py migrate` after pulling this feature so the email field and token table exist.
 
@@ -93,7 +94,7 @@ The endpoint must accept a multipart field named `image` and return an image. Re
 ```bash
 source .venv/bin/activate
 cd backend && ruff check . && python manage.py test
-cd frontend && npm test && npm run typecheck && npm run lint
+cd frontend && npm test && npm run typecheck && npm run lint && npm run build
 ```
 
 Backend tests use a fake provider for the API, and they run ONNX Runtime only when the selected model's weights are already on disk. A missing model skips that one test.
@@ -114,14 +115,14 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The site is published on http://localhost:8080. nginx serves the frontend and proxies `/api/` to Gunicorn. Postgres stores Django's tables (including the reserved user model). Redis, a Celery worker, and Celery beat delete expired results on a timer. The API also deletes expired files itself, so removal works if those containers are down.
+The site is published on http://localhost:8080. Next.js renders the pages and proxies `/api/` to Gunicorn. The API address is set when the site image is built (`API_PROXY_TARGET`). Postgres stores Django's tables (including the reserved user model). Redis, a Celery worker, and Celery beat delete expired results on a timer. The API also deletes expired files itself, so removal works if those containers are down.
 
 The sample compose file is HTTP. Before a public deploy:
 
-- Terminate TLS in front of nginx.
+- Terminate TLS in front of the Next.js site.
 - Set `DJANGO_SECURE_SSL_REDIRECT=true` and a real `DJANGO_ALLOWED_HOSTS`.
-- Set `DJANGO_BEHIND_PROXY=true` only for a proxy you control. nginx in this repo sets `X-Forwarded-For` to the connecting address, not to a client-supplied list.
-- Keep nginx `client_max_body_size` above `MAX_UPLOAD_BYTES`.
+- Set `DJANGO_BEHIND_PROXY=true` only for a proxy you control.
+- Keep the proxy body limit above `MAX_UPLOAD_BYTES`. Django still enforces the upload limit.
 - Use one Gunicorn worker on a small machine. Each worker loads its own copy of the ONNX model.
 - Point `U2NET_HOME` at a persistent volume so the model is not downloaded on every boot.
 
@@ -171,7 +172,7 @@ Slot IDs live in `frontend/src/ads/adConfig.ts` (`adSlotIds`) and can be overrid
 
 `VITE_ADSENSE_REQUIRE_CONSENT` defaults to true. The page stores “allow” or “not now” in this browser and does not insert the AdSense script before “allow”. That control is not a Google-certified consent platform. If you serve ads in the EEA, the UK, or Switzerland, use a certified platform as well. The privacy page says this.
 
-After a rebuild, confirm in the browser network panel that `adsbygoogle.js` is absent before you allow ads, present once after you allow them, and absent again if the publisher ID is cleared. An ad blocker or a rejected account should leave the upload flow working. nginx already allows the AdSense hosts in the content security policy so the script is not blocked by the container.
+After a rebuild, confirm in the browser network panel that `adsbygoogle.js` is absent before you allow ads, present once after you allow them, and absent again if the publisher ID is cleared. An ad blocker or a rejected account should leave the upload flow working. The production content security policy allows the AdSense hosts so the script is not blocked by the site server.
 
 ## Privacy and security
 

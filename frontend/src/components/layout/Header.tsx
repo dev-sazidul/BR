@@ -1,6 +1,6 @@
 import { ChevronDown, Menu, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "../../lib/navigation";
 
 import { useAuth } from "../../auth/AuthProvider";
 import { cn } from "../../utils/cn";
@@ -75,7 +75,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-white">
-      <div className="flex h-14 w-full items-center gap-4 px-4 sm:gap-6 sm:px-6">
+      <div className="flex h-14 w-full min-w-0 items-center gap-2 px-3 sm:gap-6 sm:px-6">
         <Link to="/" aria-label="Solva, home" className="shrink-0" onClick={() => window.scrollTo({ top: 0 })}>
           <Logo />
         </Link>
@@ -95,7 +95,7 @@ export function Header() {
           ))}
           <MorePages active={moreLinks.some((link) => location.pathname === link.href)} />
         </nav>
-        <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4">
+        <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-4">
           {user ? (
             <span className="hidden items-center gap-2 sm:inline-flex">
               <UserAvatar name={user.name} />
@@ -108,7 +108,7 @@ export function Header() {
               </Link>
               <Link
                 to="/register"
-                className="rounded-md bg-brand px-4 py-1.5 text-sm font-semibold text-white hover:bg-brand-dark"
+                className="rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-dark sm:px-4"
               >
                 Sign up
               </Link>

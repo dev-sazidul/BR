@@ -1,6 +1,6 @@
 import { MoreVertical } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "../../lib/navigation";
 
 import { useAuth } from "../../auth/AuthProvider";
 import { UserAvatar } from "./UserAvatar";

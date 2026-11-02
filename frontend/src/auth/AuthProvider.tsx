@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 import {
   changeAccountPassword,
@@ -13,6 +13,7 @@ import {
   type RegisterInput,
 } from "../services/authService";
 import type { AuthUser } from "../types/auth";
+import { useIsomorphicLayoutEffect } from "../utils/isomorphicLayoutEffect";
 import { clearToken, readToken, tokenIsRemembered, writeToken } from "./storage";
 
 type AuthStatus = "loading" | "anonymous" | "authenticated";
@@ -38,10 +39,10 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<AuthStatus>(readToken() ? "loading" : "anonymous");
+  const [status, setStatus] = useState<AuthStatus>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const token = readToken();
     if (!token) {
       setStatus("anonymous");

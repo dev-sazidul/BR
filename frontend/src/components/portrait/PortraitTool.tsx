@@ -395,7 +395,7 @@ export function PortraitTool({
         <h2 id="photo-type-heading" className="text-lg font-semibold">
           Photo type
         </h2>
-        <div className="mt-4 flex gap-2" role="tablist" aria-label="Photo type">
+        <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Photo type">
           {(
             [
               ["portrait", "Professional portraits"],
