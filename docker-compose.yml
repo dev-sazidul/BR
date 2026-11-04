@@ -1,13 +1,3 @@
-# Two services.
-#
-#   web      Next.js: every page and the public /api/v1 routes, accounts in SQLite.
-#   remover  FastAPI: background removal. No published port. Only `web` reaches
-#            it, over this Compose network.
-#
-# `web` is published on this machine's loopback interface only. Put a TLS
-# reverse proxy (Caddy, nginx) in front of it for public traffic, and leave
-# TRUSTED_PROXY_COUNT at 1 so rate limits use the address that proxy saw.
-
 services:
   remover:
     build: ./remover
@@ -50,6 +40,6 @@ services:
 
 volumes:
   # The ONNX model (u2net is about 176 MB), downloaded once.
-  model_data:
-  # The SQLite database. Back this up: it holds every account.
+  model_data: # The SQLite database. Back this up: it holds every account.
+
   app_data:
