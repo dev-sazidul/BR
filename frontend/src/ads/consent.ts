@@ -4,7 +4,7 @@ import type { ConsentStatus } from "./adConfig";
 
 export const CONSENT_STORAGE_KEY = "solva.adsense.consent";
 
-export type AdConsentValue = {
+type AdConsentValue = {
   status: ConsentStatus;
   grant: () => void;
   deny: () => void;

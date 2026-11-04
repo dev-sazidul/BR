@@ -33,7 +33,6 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: projectRoot,
   reactStrictMode: true,
   env: {
-    NEXT_PUBLIC_API_BASE_URL: publishedEnv("API_BASE_URL"),
     NEXT_PUBLIC_ADSENSE_ENABLED: publishedEnv("ADSENSE_ENABLED"),
     NEXT_PUBLIC_ADSENSE_CLIENT_ID: publishedEnv("ADSENSE_CLIENT_ID"),
     NEXT_PUBLIC_ADSENSE_MODE: publishedEnv("ADSENSE_MODE"),
@@ -45,10 +44,6 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   eslint: { ignoreDuringBuilds: true },
-  async rewrites() {
-    const target = (process.env.API_PROXY_TARGET || "http://127.0.0.1:8000").replace(/\/$/, "");
-    return [{ source: "/api/:path*", destination: `${target}/api/:path*` }];
-  },
   async headers() {
     if (process.env.NODE_ENV !== "production") return [];
     return [{ source: "/:path*", headers: securityHeaders }];

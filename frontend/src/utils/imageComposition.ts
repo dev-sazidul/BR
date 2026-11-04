@@ -7,7 +7,7 @@ export type Drawable = {
   source: CanvasImageSource;
 };
 
-export type CompositionInput = {
+type CompositionInput = {
   foreground: Drawable;
   backgroundImage: Drawable | null;
   snapshot: EditorSnapshot;

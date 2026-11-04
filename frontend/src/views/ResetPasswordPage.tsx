@@ -14,7 +14,6 @@ import { readErrorMessage } from "../services/api";
 export function ResetPasswordPage() {
   const { confirmPasswordReset } = useAuth();
   const [params] = useSearchParams();
-  const uid = params.get("uid") ?? "";
   const token = params.get("token") ?? "";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -24,7 +23,7 @@ export function ResetPasswordPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!uid || !token) {
+    if (!token) {
       setError("This reset link is missing information. Request a new one.");
       return;
     }
@@ -35,7 +34,7 @@ export function ResetPasswordPage() {
     setBusy(true);
     setError(null);
     try {
-      setMessage(await confirmPasswordReset({ uid, token, password, confirmPassword: confirm }));
+      setMessage(await confirmPasswordReset({ token, password, confirmPassword: confirm }));
     } catch (err) {
       setError(await readErrorMessage(err));
     } finally {

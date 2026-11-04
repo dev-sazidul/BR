@@ -1,7 +1,7 @@
 import type { AspectId, CropNorm, EditorSnapshot } from "../types/editor";
 
-export const MAX_OUTPUT_EDGE = 4096;
-export const MIN_OUTPUT_EDGE = 1;
+const MAX_OUTPUT_EDGE = 4096;
+const MIN_OUTPUT_EDGE = 1;
 export const MAX_BACKGROUND_EDGE = 8192;
 const MIN_CROP = 0.08;
 
@@ -44,7 +44,7 @@ export function rotatedBounds(width: number, height: number, degrees: number): {
   };
 }
 
-export function wrapDegrees(value: number): number {
+function wrapDegrees(value: number): number {
   let next = value % 360;
   if (next > 180) next -= 360;
   if (next < -180) next += 360;

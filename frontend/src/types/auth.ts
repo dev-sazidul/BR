@@ -5,7 +5,7 @@ export type AuthUser = {
   date_joined: string;
 };
 
+/** The session itself travels in an httpOnly cookie, not in this body. */
 export type AuthSession = {
-  token: string;
   user: AuthUser;
 };

@@ -1,0 +1,52 @@
+// Accounts only. Images are never stored.
+// The schema avoids SQLite-only features so another provider can be swapped in
+// later: change `provider`, point DATABASE_URL at the new database, and create
+// a fresh migration.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  /// Stored lowercased. Lookups lowercase the input first.
+  email        String    @unique
+  name         String
+  passwordHash String
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+
+  sessions    Session[]
+  resetTokens PasswordResetToken[]
+}
+
+/// A signed-in browser. `id` is the SHA-256 of the cookie value, so a copy of
+/// the database cannot be used to sign in.
+model Session {
+  id         String   @id
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  persistent Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// One-time password reset link. `id` is the SHA-256 of the token in the link.
+model PasswordResetToken {
+  id        String   @id
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
+}

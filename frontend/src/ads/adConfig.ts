@@ -1,10 +1,10 @@
 export const AD_PLACEMENTS = ["header", "workspace", "midContent", "footer"] as const;
 
 export type AdPlacement = (typeof AD_PLACEMENTS)[number];
-export type AdMode = "manual" | "auto";
+type AdMode = "manual" | "auto";
 export type ConsentStatus = "unknown" | "granted" | "denied";
 
-export type AdEnvironment = {
+type AdEnvironment = {
   DEV: boolean;
   VITE_ADSENSE_ENABLED?: string;
   VITE_ADSENSE_CLIENT_ID?: string;
@@ -21,14 +21,14 @@ export type AdEnvironment = {
  * Environment variables override these values so a production build can supply
  * them without editing source. Do not put a guessed or example ID in either place.
  */
-export const adSlotIds: Record<AdPlacement, string> = {
+const adSlotIds: Record<AdPlacement, string> = {
   header: "",
   workspace: "",
   midContent: "",
   footer: "",
 };
 
-export type AdSettings = {
+type AdSettings = {
   active: boolean;
   clientId: string;
   clientValid: boolean;

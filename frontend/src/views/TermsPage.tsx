@@ -22,8 +22,8 @@ export function TermsPage() {
         tool works if they never load.
       </p>
       <p>
-        Results are temporary. Download anything you want to keep before the retention window of about{" "}
-        {config.retention_minutes} minutes ends. The operator of the server provides the service as-is.
+        Results are not kept on the server. Download anything you want to keep before you leave or reload the page.
+        The operator of the server provides the service as-is.
       </p>
     </TextPage>
   );

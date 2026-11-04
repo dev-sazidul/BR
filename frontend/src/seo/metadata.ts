@@ -1,4 +1,4 @@
-export type PageMeta = {
+type PageMeta = {
   title: string;
   description: string;
   path: string;
@@ -89,7 +89,7 @@ export function formatDocumentTitle(pageTitle: string): string {
   return pageTitle === "Home" ? "Solva — Remove Image Backgrounds" : `${pageTitle} — Solva`;
 }
 
-export function normalizePath(pathname: string): string {
+function normalizePath(pathname: string): string {
   const path = pathname.split("?")[0]?.split("#")[0] || "/";
   if (path.length > 1 && path.endsWith("/")) return path.replace(/\/+$/, "");
   return path || "/";

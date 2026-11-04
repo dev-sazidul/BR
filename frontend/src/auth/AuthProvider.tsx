@@ -14,7 +14,6 @@ import {
 } from "../services/authService";
 import type { AuthUser } from "../types/auth";
 import { useIsomorphicLayoutEffect } from "../utils/isomorphicLayoutEffect";
-import { clearToken, readToken, tokenIsRemembered, writeToken } from "./storage";
 
 type AuthStatus = "loading" | "anonymous" | "authenticated";
 
@@ -28,23 +27,26 @@ type AuthContextValue = {
   changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
   removeAccount: (password: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<string>;
-  confirmPasswordReset: (input: {
-    uid: string;
-    token: string;
-    password: string;
-    confirmPassword: string;
-  }) => Promise<string>;
+  confirmPasswordReset: (input: { token: string; password: string; confirmPassword: string }) => Promise<string>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+/**
+ * The session cookie is httpOnly, so scripts cannot read it. The server also
+ * sets a plain "solva_signed_in" hint, which lets guests skip the /me request.
+ */
+function mightBeSignedIn(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie.split(";").some((part) => part.trim().startsWith("solva_signed_in="));
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useIsomorphicLayoutEffect(() => {
-    const token = readToken();
-    if (!token) {
+    if (!mightBeSignedIn()) {
       setStatus("anonymous");
       setUser(null);
       return;
@@ -59,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         if (!active) return;
-        clearToken();
         setUser(null);
         setStatus("anonymous");
       });
@@ -69,38 +70,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (email: string, password: string, remember: boolean) => {
-    const session = await loginAccount(email, password);
-    writeToken(session.token, remember);
+    const session = await loginAccount(email, password, remember);
     setUser(session.user);
     setStatus("authenticated");
   }, []);
 
   const register = useCallback(async (input: RegisterInput) => {
     const session = await registerAccount(input);
-    writeToken(session.token, true);
     setUser(session.user);
     setStatus("authenticated");
   }, []);
 
   const signOut = useCallback(async () => {
     try {
-      if (readToken()) await logoutAccount();
+      await logoutAccount();
     } finally {
-      clearToken();
       setUser(null);
       setStatus("anonymous");
     }
   }, []);
 
   const updateProfile = useCallback(async (name: string) => {
-    const next = await updateAccountName(name);
-    setUser(next);
+    setUser(await updateAccountName(name));
   }, []);
 
   const changePassword = useCallback(
     async (currentPassword: string, newPassword: string, confirmPassword: string) => {
       const session = await changeAccountPassword(currentPassword, newPassword, confirmPassword);
-      writeToken(session.token, tokenIsRemembered());
       setUser(session.user);
     },
     [],
@@ -108,7 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const removeAccount = useCallback(async (password: string) => {
     await deleteAccount(password);
-    clearToken();
     setUser(null);
     setStatus("anonymous");
   }, []);
@@ -116,9 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sendReset = useCallback(async (email: string) => requestPasswordReset(email), []);
 
   const finishReset = useCallback(
-    async (input: { uid: string; token: string; password: string; confirmPassword: string }) =>
+    async (input: { token: string; password: string; confirmPassword: string }) =>
       confirmPasswordReset({
-        uid: input.uid,
         token: input.token,
         password: input.password,
         confirm_password: input.confirmPassword,
@@ -139,18 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       requestPasswordReset: sendReset,
       confirmPasswordReset: finishReset,
     }),
-    [
-      status,
-      user,
-      signIn,
-      register,
-      signOut,
-      updateProfile,
-      changePassword,
-      removeAccount,
-      sendReset,
-      finishReset,
-    ],
+    [status, user, signIn, register, signOut, updateProfile, changePassword, removeAccount, sendReset, finishReset],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -2,13 +2,10 @@
 
 import { readAdSettings } from "../ads/adConfig";
 import { useAdConsent } from "../ads/consent";
-import { useAppConfig } from "../shell/ConfigProvider";
 import { Button } from "../components/common/Button";
 import { TextPage } from "../components/layout/TextPage";
 
 export function PrivacyPage() {
-  const { config } = useAppConfig();
-  const external = config.ai_provider === "http";
   const ads = readAdSettings();
   const consent = useAdConsent();
 
@@ -21,20 +18,16 @@ export function PrivacyPage() {
         outcome. The log does not include the image itself.
       </p>
       <p>
-        The original upload is processed in memory and is not saved. The transparent PNG result is stored under a
-        random name so you can preview and download it. A signed link is required to read that file. It expires after
-        about {config.retention_minutes} minutes.
+        The image is processed in memory and is not saved, and neither is the transparent result. The result is sent
+        straight back to your browser, which keeps it only until you leave or reload the page.
       </p>
       <p>
-        Expired files are deleted when the app handles a removal request, when someone opens an expired link, when an
-        operator runs the cleanup command, and on a schedule if Celery beat is running. Deletion happens while the
-        server is running. If the server is stopped, leftover files are removed the next time cleanup runs. This app
-        does not promise that a file disappears at the exact minute the timer ends.
+        Background removal runs on servers run by the operator of this site. The image is not sent to a third-party AI
+        service.
       </p>
       <p>
-        {external
-          ? "This server is configured to send images to an external AI provider. That provider receives the image you upload."
-          : "With the default engine, background removal runs on this server. The image is not sent to a third-party AI service."}
+        Signing in sets two cookies. One holds your session and cannot be read by scripts on the page. The other only
+        says that a session may exist, so the page knows whether to check. Signing out removes both.
       </p>
       <p>
         Rate limiting uses your IP address. If the server is behind a trusted proxy, it uses the forwarding header

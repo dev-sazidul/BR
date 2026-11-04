@@ -13,7 +13,7 @@ export type CropWindow = {
   rotation: number;
 };
 
-export type AutoCropResult = {
+type AutoCropResult = {
   crop: CropWindow;
   shrunk: boolean;
   usedFace: boolean;
@@ -22,7 +22,7 @@ export type AutoCropResult = {
 const CROWN_PAD = 0.45;
 const CHIN_PAD = 0.15;
 
-export function estimateHead(face: FaceBox): { crown: number; chin: number; centerX: number; height: number } {
+function estimateHead(face: FaceBox): { crown: number; chin: number; centerX: number; height: number } {
   const crown = face.y - face.height * CROWN_PAD;
   const chin = face.y + face.height + face.height * CHIN_PAD;
   return { crown, chin, centerX: face.x + face.width / 2, height: Math.max(1, chin - crown) };

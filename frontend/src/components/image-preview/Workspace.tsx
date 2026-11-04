@@ -5,10 +5,8 @@ import { ComparisonSlider } from "./ComparisonSlider";
 import { Button } from "../common/Button";
 import { ErrorBanner } from "../common/ErrorBanner";
 import { Spinner } from "../common/Spinner";
-import type { RemovalPhase } from "../../hooks/useBackgroundRemoval";
-import type { RemovalResult } from "../../types/api";
+import type { CutoutSize, RemovalPhase } from "../../hooks/useBackgroundRemoval";
 import { cn } from "../../utils/cn";
-import { formatExpiry } from "../../utils/download";
 import { FILE_ACCEPT } from "../../utils/validateFile";
 
 const AdvancedImageEditor = lazy(() =>
@@ -19,7 +17,7 @@ type WorkspaceProps = {
   fileName: string;
   originalUrl: string | null;
   resultUrl: string | null;
-  meta: RemovalResult | null;
+  meta: CutoutSize | null;
   phase: RemovalPhase;
   error: string | null;
   uploadProgress: number | null;
@@ -57,7 +55,6 @@ export function Workspace({
   const [background, setBackground] = useState<string | null>(null);
   const [custom, setCustom] = useState("#F4EDE4");
   const [editorOpen, setEditorOpen] = useState(false);
-  const expiry = meta ? formatExpiry(meta.expires_at) : null;
   const jpgColor = background ?? "#FFFFFF";
 
   useEffect(() => {
@@ -92,7 +89,7 @@ export function Workspace({
       {busy ? (
         <p role="status" className="mt-4 flex items-center gap-2 text-sm font-medium text-brand-dark">
           <Spinner />
-          {statusCopy(phase, meta, uploadProgress)}
+          {statusCopy(phase, uploadProgress)}
         </p>
       ) : null}
       {modelHint && busy ? <p className="mt-2 text-sm text-muted">{modelHint}</p> : null}
@@ -181,7 +178,6 @@ export function Workspace({
           </Button>
         ) : null}
       </div>
-      {expiry ? <p className="mt-3 text-sm text-muted">This download stays available until {expiry}.</p> : null}
       <p className="mt-2 text-sm text-muted">Edges around hair, glass, and fine detail can still need a manual touch.</p>
 
       <input
@@ -251,8 +247,7 @@ function ViewButton({
   );
 }
 
-function statusCopy(phase: RemovalPhase, meta: RemovalResult | null, uploadProgress: number | null): string {
-  if (phase === "processing" && meta) return "Preparing preview…";
+function statusCopy(phase: RemovalPhase, uploadProgress: number | null): string {
   if (phase === "processing") return "Removing background…";
   if (uploadProgress !== null && uploadProgress < 1) {
     return `Uploading and removing the background… ${Math.round(uploadProgress * 100)}% uploaded`;

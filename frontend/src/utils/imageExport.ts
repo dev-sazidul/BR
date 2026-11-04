@@ -1,7 +1,7 @@
 import type { BackgroundSelection, EditorSnapshot, ExportFormat, ExportMode } from "../types/editor";
 import { paintComposition, type Drawable } from "./imageComposition";
 
-export type ExportPlan = {
+type ExportPlan = {
   includeBackground: boolean;
   underlay: string | null;
   mime: string;

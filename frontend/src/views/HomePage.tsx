@@ -86,9 +86,8 @@ export function HomePage() {
           )}
 
           <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-6 text-muted">
-            The original file is not stored. The transparent result stays on this server for about{" "}
-            {config.retention_minutes} minutes so you can download it, then the app deletes it while the server is
-            running. Upload only images you are allowed to use.
+            Your image is processed in memory and is not stored. The transparent result comes straight back to this
+            page, so download it before you leave. Upload only images you are allowed to use.
           </p>
         </div>
       </section>

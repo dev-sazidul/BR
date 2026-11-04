@@ -1,37 +1,14 @@
 import axios from "axios";
 
-import { readToken } from "../auth/storage";
 import type { ApiErrorBody } from "../types/api";
 
-const AUTHENTICATED_PATHS = ["/api/v1/auth/logout/", "/api/v1/auth/me/", "/api/v1/auth/change-password/"];
-
-function needsAccountToken(url: string | undefined): boolean {
-  if (!url) return false;
-  return AUTHENTICATED_PATHS.some((path) => url.startsWith(path));
-}
-
-export function apiBaseUrl(value: string | undefined): string {
-  const raw = (value || "").trim().replace(/\/$/, "");
-  return raw.replace(/\/api\/v1$/, "");
-}
-
-function configuredApiBase(): string | undefined {
-  if (process.env.NEXT_PUBLIC_API_BASE_URL) return process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (typeof process === "undefined") return undefined;
-  return process.env.VITE_API_BASE_URL;
-}
-
+/**
+ * Same-origin client. Next.js serves /api/v1 itself, and the session cookie is
+ * httpOnly, so the browser attaches it without any script seeing it.
+ */
 export const api = axios.create({
-  baseURL: apiBaseUrl(configuredApiBase()),
   timeout: 180_000,
   headers: { Accept: "application/json" },
-});
-
-api.interceptors.request.use((config) => {
-  if (!needsAccountToken(config.url)) return config;
-  const token = readToken();
-  if (token) config.headers.Authorization = `Token ${token}`;
-  return config;
 });
 
 export function getErrorMessage(error: unknown): string {

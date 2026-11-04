@@ -5,15 +5,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
 import { navigationState } from "../test/navigation-state";
-import { fetchHealth, fetchPublicConfig, fetchResultBlob, removeBackground } from "../services/imageService";
+import { fetchHealth, fetchPublicConfig, removeBackground } from "../services/imageService";
 import type { RemovalResult } from "../types/api";
 
 vi.mock("../services/imageService", () => ({
   fetchPublicConfig: vi.fn(),
   fetchHealth: vi.fn(),
   removeBackground: vi.fn(),
-  fetchResultBlob: vi.fn(),
-  downloadResult: vi.fn(),
 }));
 
 const config = {
@@ -21,17 +19,15 @@ const config = {
   max_dimension_px: 4096,
   supported_formats: ["PNG", "JPEG", "WEBP"],
   output_formats: ["png", "jpeg"],
-  retention_minutes: 30,
-  ai_provider: "rembg",
   ai_model: "u2net",
   contact_email: null as string | null,
 };
 
 const health = {
   status: "ok" as const,
-  service: "solva-api",
+  service: "solva",
   ai: {
-    provider: "rembg",
+    provider: "remover",
     model: "u2net",
     available: true,
     model_cached: true,
@@ -51,7 +47,6 @@ describe("Solva app", () => {
     vi.mocked(fetchPublicConfig).mockResolvedValue(config);
     vi.mocked(fetchHealth).mockResolvedValue(health);
     vi.mocked(removeBackground).mockReset();
-    vi.mocked(fetchResultBlob).mockReset();
   });
 
   it("shows the upload limit from the server", async () => {
@@ -59,7 +54,7 @@ describe("Solva app", () => {
     expect(screen.getByRole("heading", { name: "Remove Image Backgrounds in Seconds" })).toBeInTheDocument();
     expect(await screen.findByText(/up to 10 MB/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Browse image" })).toBeInTheDocument();
-    expect(screen.getByText(/while the server is running/)).toBeInTheDocument();
+    expect(screen.getByText(/processed in memory and is not stored/)).toBeInTheDocument();
     expect(screen.getAllByRole("complementary", { name: "Advertisement" })).toHaveLength(4);
     expect(document.querySelector("script[data-solva-adsense]")).toBeNull();
     const dropzone = screen.getByText("Drag an image here").parentElement;
@@ -75,7 +70,6 @@ describe("Solva app", () => {
           resolveUpload = resolve;
         }),
     );
-    vi.mocked(fetchResultBlob).mockResolvedValue(new Blob(["png"], { type: "image/png" }));
 
     renderAt();
     await screen.findByText(/up to 10 MB/);
@@ -87,16 +81,7 @@ describe("Solva app", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(/Uploading and removing the background/);
     expect(screen.getByRole("button", { name: "Upload another" })).toBeDisabled();
 
-    resolveUpload({
-      id: "abc",
-      original_filename: "portrait.png",
-      width: 32,
-      height: 32,
-      output_format: "png",
-      result_url: "/api/v1/images/results/token/",
-      download_url: "/api/v1/images/results/token/download/",
-      expires_at: "2026-10-28T12:00:00Z",
-    });
+    resolveUpload({ blob: new Blob(["png"], { type: "image/png" }), width: 32, height: 32 });
 
     expect(await screen.findByRole("img", { name: "Background removed" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Selected image" })).toBeInTheDocument();
@@ -138,11 +123,11 @@ describe("Solva app", () => {
     expect(removeBackground).not.toHaveBeenCalled();
   });
 
-  it("explains privacy without promising immediate deletion", async () => {
+  it("explains that nothing is stored and how sign-in cookies work", async () => {
     renderAt("/privacy");
     expect(await screen.findByRole("heading", { name: "Privacy" })).toBeInTheDocument();
-    expect(screen.getByText(/while the server is running/i)).toBeInTheDocument();
-    expect(screen.getByText(/does not promise/i)).toBeInTheDocument();
+    expect(screen.getByText(/neither is the transparent result/i)).toBeInTheDocument();
+    expect(screen.getByText(/cannot be read by scripts/i)).toBeInTheDocument();
     expect(screen.getByText(/Advertising is not configured/i)).toBeInTheDocument();
   });
 

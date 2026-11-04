@@ -17,7 +17,7 @@ import {
 import { downloadBlob } from "../utils/download";
 import { validateClientFile } from "../utils/validateFile";
 
-export function loadHtmlImage(url: string): Promise<HTMLImageElement> {
+function loadHtmlImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     if (!url.startsWith("blob:")) image.crossOrigin = "anonymous";

@@ -4,35 +4,40 @@ Solva removes the background from one image and returns a transparent PNG. The p
 
 The interface is original. It is not a copy of remove.bg.
 
-## Stack
+## Architecture
 
-- Next.js, React, TypeScript, Tailwind CSS, Axios
-- Next.js renders the pages and proxies `/api` to Django
-- Django, Django REST Framework, Pillow
-- Background removal with ONNX Runtime and the public U²-Net weights, behind a small provider interface
-- Optional PostgreSQL, Redis, and Celery. Anonymous removal does not need them.
+```
+browser ──HTTPS──▶ reverse proxy ──▶ web (Next.js) ──private network──▶ remover (FastAPI)
+                                       │
+                                       └── SQLite through Prisma (accounts only)
+```
 
-## API
+| Part | Where | Does |
+| --- | --- | --- |
+| `web` | `frontend/` | Every page and every public `/api/v1` route. Accounts, sessions, rate limits, upload checks. |
+| `remover` | `remover/background_remover.py` | One file. Validates the image bytes, runs U²-Net through ONNX Runtime, cleans the edge colour, returns a PNG. |
+| Database | `frontend/prisma/` | SQLite through Prisma. Users, sessions, and reset tokens. No images. |
+
+The remover is internal. Docker publishes no port for it, and the browser never calls it. Next.js is its only client.
+
+Nothing about an image is stored. The upload is processed in memory and the response to it is the PNG itself, so there are no result files, links, or cleanup jobs. JPG export happens in the browser.
+
+## Public API
+
+Served by Next.js. The full contract is in [docs/openapi.yaml](docs/openapi.yaml).
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/api/v1/health/` | Process is up. `ai.available` tells you whether removal can run. |
-| `GET` | `/api/v1/config/` | Public limits only. No secrets. |
-| `POST` | `/api/v1/images/remove-background/` | Multipart field `image`. Returns a signed result URL. |
-| `GET` | `/api/v1/images/results/<token>/` | Inline transparent PNG. |
-| `GET` | `/api/v1/images/results/<token>/download/?format=png` | PNG download. |
-| `GET` | `/api/v1/images/results/<token>/download/?format=jpeg&background=%23FFFFFF` | JPEG flattened onto a hex color. |
-| `POST` | `/api/v1/auth/register/` | Optional account. Returns a token and the profile. |
-| `POST` | `/api/v1/auth/login/` | Returns a token. Send it as `Authorization: Token <token>` on account routes only. |
-| `POST` | `/api/v1/auth/logout/` | Deletes that token. |
-| `GET` / `PATCH` / `DELETE` | `/api/v1/auth/me/` | Read or update the signed-in profile, or delete the account. |
-| `POST` | `/api/v1/auth/change-password/` | Replaces the password and issues a new token. |
-| `POST` | `/api/v1/auth/password-reset/` | Emails a reset link when mail is configured. The response does not say whether the email exists. |
-| `POST` | `/api/v1/auth/password-reset/confirm/` | Sets a new password from the link. |
-| `GET` | `/api/schema/` | OpenAPI schema (YAML). |
-| `GET` | `/api/docs/` | Swagger UI. |
-
-How to open Swagger UI, try an upload, and regenerate `docs/openapi.yaml` is in [docs/swagger.md](docs/swagger.md).
+| `GET` | `/api/v1/health` | 200 while the site is up. `ai.available` says whether removal can run. |
+| `GET` | `/api/v1/config` | Public limits only. |
+| `POST` | `/api/v1/images/remove-background` | Multipart field `image`. Returns `image/png` with `X-Image-Width` and `X-Image-Height`. |
+| `POST` | `/api/v1/auth/register` | Creates an account and signs in. |
+| `POST` | `/api/v1/auth/login` | Signs in. `remember: false` gives a browser-session cookie. |
+| `POST` | `/api/v1/auth/logout` | Ends this browser's session. |
+| `GET` / `PATCH` / `DELETE` | `/api/v1/auth/me` | Read the account, change the name, or delete the account (needs the password). |
+| `POST` | `/api/v1/auth/change-password` | Signs out every other browser. |
+| `POST` | `/api/v1/auth/password-reset` | Emails a one-time link. Same answer whether or not the email exists. |
+| `POST` | `/api/v1/auth/password-reset/confirm` | Sets the new password from that link. |
 
 Errors look like:
 
@@ -40,108 +45,92 @@ Errors look like:
 {"error": {"code": "invalid_image", "message": "This file is not a valid PNG, JPG, or WebP image.", "details": {}}}
 ```
 
-The original upload is not stored. The PNG result is kept under a random name until `IMAGE_RETENTION_MINUTES` (default 30). Cleanup runs on each removal request, when an expired link is opened, via `python manage.py cleanup_results`, and on a Celery beat schedule when Redis is configured. If the server is stopped, leftover files are deleted the next time cleanup runs.
+Sessions live in an httpOnly, SameSite=Lax cookie, `solva_session`. The database stores only a SHA-256 of it. A second cookie, `solva_signed_in`, holds no secret: it tells the page whether to ask `/me`, so guests make no account request. Writes to `/auth` routes are refused when the `Origin` header names another site. Passwords are hashed with scrypt.
 
 ## Local development
 
-Use Python 3.12 or 3.13. Python 3.14 is not a good target for the ONNX runtime yet. Docker uses 3.12.
+You need Node 22 or later and Python 3.12 or later. Docker uses Node 22 and Python 3.12.
+
+**1. The remover**
 
 ```bash
-python3.13 -m venv .venv
-source .venv/bin/activate
-pip install -r backend/requirements.txt -r backend/requirements-dev.txt
-cd backend
-python manage.py migrate
-python manage.py runserver
+cd remover
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+python background_remover.py       # http://127.0.0.1:8001
 ```
 
-In another terminal:
+The first start downloads the model into `U2NET_HOME` or `~/.u2net`. `u2net` is about 176 MB. Set `REMBG_MODEL=u2netp` for a 4 MB model with weaker edges. `python background_remover.py download` fetches the model and exits.
+
+**2. The site**
 
 ```bash
 cd frontend
-npm ci
-npm run dev
+npm ci                 # also generates the Prisma client
+npm run db:migrate     # creates frontend/data/solva.db
+npm run dev            # http://127.0.0.1:5173
 ```
 
-Open http://127.0.0.1:5173. Next.js renders each page and proxies `/api` to http://127.0.0.1:8000. Copy `backend/.env.example` to `backend/.env` only when you need to override a setting. Set `SITE_URL` when the public origin is not the request host. Set `API_PROXY_TARGET` when Django is not on http://127.0.0.1:8000.
-
-Accounts are optional. Guests can still upload, preview, and download. A signed-in browser keeps the API token in `localStorage` when Remember me is on, and in `sessionStorage` when it is off. The token is sent only to `/api/v1/auth/` routes that need it, so a stale token does not block background removal. Run `python manage.py migrate` after pulling this feature so the email field and token table exist.
-
-After a cutout is ready, Edit image opens a browser-side editor. Natural background photographs, a background photo from the device, a solid color, crop, rotate, resize, undo, and export reuse the transparent PNG already returned by the API. They do not call the removal service again. The built-in photographs are resized copies of Wikimedia Commons files and each one keeps its author and license in the editor. PNG export can keep the alpha channel. JPG export flattens onto the selected background, or white when the background is transparent.
-
-Password reset emails use Django's mail settings. In development they print to the console. In production, set `EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL`, and `FRONTEND_ORIGIN` to the public site origin, or the reset link is not delivered. When the site and API are on different hosts, add the site origin to `DJANGO_CORS_ALLOWED_ORIGINS`. On Vercel without Postgres, SQLite lives in `/tmp` and accounts do not survive a new instance. Use Postgres if accounts should last.
-
-### AI model
-
-The default provider is `rembg` and the default model is `u2net`. The server downloads that ONNX file on the first removal into `U2NET_HOME` or `~/.u2net`. The file is about 176 MB. The first request can take several minutes and needs network access. Later requests reuse the file.
-
-`REMBG_MODEL=u2netp` is a smaller, faster model (about 4 MB) with lower edge quality. Those two names are the supported models. The `rembg` Python package is not installed. It pulls OpenCV, SciPy, and Numba, and that set does not fit in a 500 MB serverless function. Masks are applied directly. There is no alpha-matting pass.
-
-Health stays HTTP 200 when the process is up. Read `ai.available` and `ai.model_cached`. If ONNX Runtime is not installed, or the model cannot be downloaded, `POST /api/v1/images/remove-background/` returns **503** and does not pretend the original image was processed.
-
-To send images to an external remover instead, set:
-
-```bash
-AI_PROVIDER=http
-AI_HTTP_ENDPOINT=https://example.com/remove
-AI_HTTP_API_KEY=optional-bearer-token
-```
-
-The endpoint must accept a multipart field named `image` and return an image. Redirects are refused. The URL is operator configuration, not something the browser can choose. With this provider, uploaded images leave the server. The privacy page says so when `ai_provider` is `http`.
+Copy `frontend/.env.example` to `frontend/.env` only to change a default. Without `SMTP_HOST`, development prints password reset emails to the terminal.
 
 ## Tests
 
 ```bash
-source .venv/bin/activate
-cd backend && ruff check . && python manage.py test
+cd remover && ruff check . && pytest
 cd frontend && npm test && npm run typecheck && npm run lint && npm run build
 ```
 
-Backend tests use a fake provider for the API, and they run ONNX Runtime only when the selected model's weights are already on disk. A missing model skips that one test.
-
-## Vercel
-
-Vercel reads `manage.py` after it installs Python packages. It prefers `backend/pyproject.toml` over `backend/requirements.txt`. That file now lists the same dependencies. The repository root `requirements.txt` repeats them, because Vercel does not follow a `-r` include. Python is pinned to 3.12 in `.python-version`.
-
-Set `DJANGO_SECRET_KEY` in the Vercel project. `DJANGO_ALLOWED_HOSTS` can stay as `localhost` for local use; a Vercel deploy also allows `.vercel.app`. The function filesystem is temporary: result files and the SQLite database live under `/tmp` and do not survive a new instance. Use `REMBG_MODEL=u2netp` for the first deploy. The default `u2net` file is about 176 MB and the download often exceeds a serverless time limit. Background removal still returns an error if the model cannot be loaded. It does not return the original image as a cutout. The function installs ONNX Runtime and NumPy, and leaves out the larger imaging libraries that previously made the bundle about 660 MB.
+The remover tests use a fake mask for the HTTP and validation cases. One test runs the real model, and only when its weights are on disk. The site tests include route tests against a temporary SQLite database, with the remover stubbed.
 
 ## Docker
 
-Docker Compose is prepared. This workspace did not have a Docker daemon, so the compose file was not executed here.
-
 ```bash
 cp .env.example .env
-# Set DJANGO_SECRET_KEY and POSTGRES_PASSWORD.
 docker compose up --build
 ```
 
-The site is published on http://localhost:8080. Next.js renders the pages and proxies `/api/` to Gunicorn. The API address is set when the site image is built (`API_PROXY_TARGET`). Postgres stores Django's tables (including the reserved user model). Redis, a Celery worker, and Celery beat delete expired results on a timer. The API also deletes expired files itself, so removal works if those containers are down.
+This builds two images and starts them:
 
-The sample compose file is HTTP. Before a public deploy:
+- `remover`: no published port. The model downloads once into the `model_data` volume.
+- `web`: published on `127.0.0.1:8080` only. Pending migrations are applied each time it starts. The SQLite database lives in the `app_data` volume. Back that volume up: it holds every account.
 
-- Terminate TLS in front of the Next.js site.
-- Set `DJANGO_SECURE_SSL_REDIRECT=true` and a real `DJANGO_ALLOWED_HOSTS`.
-- Set `DJANGO_BEHIND_PROXY=true` only for a proxy you control.
-- Keep the proxy body limit above `MAX_UPLOAD_BYTES`. Django still enforces the upload limit.
-- Use one Gunicorn worker on a small machine. Each worker loads its own copy of the ONNX model.
-- Point `U2NET_HOME` at a persistent volume so the model is not downloaded on every boot.
+The first start of `remover` downloads the model, so the first removal waits for that. `GET /api/v1/health` shows `ai.model_cached: true` once it is on disk.
+
+Before a public deploy:
+
+- Put a TLS reverse proxy (Caddy, nginx) in front of `web` and set `SITE_URL` to the public `https://` origin. Session cookies become `Secure` automatically.
+- Keep `TRUSTED_PROXY_COUNT` equal to the number of proxies in front of `web`. Rate limits use the address the nearest proxy saw. With no proxy in front, a client can pick its own address.
+- Keep the proxy's body limit above `MAX_UPLOAD_BYTES`.
+- Set `REMOVER_TOKEN` for a second lock between the two services.
+- Rate limits are counted in memory, which suits one `web` container. Several replicas would each count separately.
+
+## Changing the database later
+
+The Prisma schema uses no SQLite-only features. To move to Postgres or MySQL, change `provider` in `frontend/prisma/schema.prisma`, swap the SQLite driver adapter in `frontend/src/server/db.ts` for the new database's adapter, point `DATABASE_URL` at it, and create a fresh migration. Accounts in the old SQLite file have to be copied across.
 
 ## Configuration
 
-See `backend/.env.example` and the root `.env.example`.
+Docker reads the root `.env` (see `.env.example`). Local development reads `frontend/.env` and the remover's environment.
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `MAX_UPLOAD_BYTES` | 10485760 | Upload limit. |
-| `MAX_DIMENSION_PX` | 4096 | Longest allowed side. |
-| `MAX_IMAGE_PIXELS` | 16000000 | Decompression-bomb ceiling. |
-| `IMAGE_RETENTION_MINUTES` | 30 | How long a result link works. |
-| `PROCESSING_TIMEOUT_SECONDS` | 120 | When the HTTP call gives up. The model thread may still finish. |
-| `BACKGROUND_REMOVAL_THROTTLE` | `10/minute` | Per-IP limit for removal. |
-| `CONTACT_EMAIL` | empty | Shown on the contact page. No mail is sent. |
-| `TRUST_PROXY_HEADERS` | false | Use `X-Forwarded-For` for rate limits. |
-
-`GET /api/v1/config/` is what the page uses for the upload limit, retention time, and contact email.
+| Variable | Default | Used by | Meaning |
+| --- | --- | --- | --- |
+| `SITE_URL` | `http://127.0.0.1:5173` | web | Public origin. Used in reset links. `https://` makes cookies Secure. |
+| `DATABASE_URL` | `file:./data/solva.db` | web | SQLite file. Docker sets `file:/data/solva.db`. |
+| `REMOVER_URL` | `http://127.0.0.1:8001` | web | Where the remover listens. |
+| `REMOVER_TOKEN` | empty | both | Optional shared secret, sent as `X-Remover-Token`. |
+| `REMBG_MODEL` | `u2net` | both | `u2net` or `u2netp`. |
+| `REMOVER_PRELOAD` | `true` | remover | Load the model at start-up. |
+| `MAX_UPLOAD_BYTES` | 10485760 | both | Upload limit. |
+| `MAX_DIMENSION_PX` | 4096 | both | Longest allowed side. |
+| `MAX_IMAGE_PIXELS` | 16000000 | remover | Decompression-bomb ceiling. |
+| `PROCESSING_TIMEOUT_SECONDS` | 120 | both | When removal gives up with 504. ONNX cannot be cancelled, so the worker may still finish. |
+| `BACKGROUND_REMOVAL_RATE` | `10/minute` | web | Per-address limit for removal. |
+| `AUTH_RATE` | `8/minute` | web | Per-address limit for account writes. |
+| `TRUSTED_PROXY_COUNT` | 1 | web | Proxies in front of web that append to `X-Forwarded-For`. |
+| `DISABLE_RATE_LIMITS` | false | web | For local testing only. |
+| `CONTACT_EMAIL` | empty | web | Shown on the contact page. No mail is sent. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | empty | web | Password reset email. |
 
 ## Advertising
 
@@ -151,7 +140,7 @@ Nothing calls Google until the configuration is real.
 
 1. In AdSense, add the site and wait until the account is approved. This repository does not do that for you.
 2. Create ad units if you want manual placements. Copy each slot ID.
-3. Put the public publisher ID in `frontend/.env` (local) or the root `.env` before `docker compose build` (the value is baked into the static files):
+3. Put the public publisher ID in `frontend/.env` (local) or the root `.env` before `docker compose build` (the value is baked into the page bundle):
 
 ```bash
 VITE_ADSENSE_CLIENT_ID=ca-pub-XXXXXXXXXXXXXXXX
@@ -176,10 +165,11 @@ After a rebuild, confirm in the browser network panel that `adsbygoogle.js` is a
 
 ## Privacy and security
 
-Uploads are checked with Pillow, not by file extension. Limits cover size, dimensions, pixel count, and animation. Result filenames are random. Download links are signed and expire. Filesystem paths are not returned. Secrets stay in the environment.
+- Uploads are checked with Pillow, not by file extension: size, dimensions, pixel count, and animation. Oversized images are refused from their header, before the pixels are decoded.
+- Neither the upload nor the result is written to disk.
+- Request bodies are read with a byte limit, so a missing or false `Content-Length` cannot get past it.
+- Secrets stay in the environment. `/api/v1/config` returns limits only.
 
-There is no account in this version. `apps.accounts.User` exists so a custom user model is in the first migration, which Django requires before accounts can be added later. Removal does not create users.
+## Not built
 
-## What is intentionally not built
-
-Accounts, history, batch jobs, custom background images, resizing, credits, payments, and an admin analytics dashboard are extension points, not features of this version. The provider interface and `/api/v1/` prefix are the seams for a second model or a queue later.
+History, batch jobs, credits, payments, and an admin dashboard are not features of this version. Accounts exist but are not linked to uploads.

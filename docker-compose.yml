@@ -1,92 +1,32 @@
+# Two services.
+#
+#   web      Next.js: every page and the public /api/v1 routes, accounts in SQLite.
+#   remover  FastAPI: background removal. No published port. Only `web` reaches
+#            it, over this Compose network.
+#
+# `web` is published on this machine's loopback interface only. Put a TLS
+# reverse proxy (Caddy, nginx) in front of it for public traffic, and leave
+# TRUSTED_PROXY_COUNT at 1 so rate limits use the address that proxy saw.
+
 services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-solva}
-      POSTGRES_USER: ${POSTGRES_USER:-solva}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-solva} -d ${POSTGRES_DB:-solva}"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-
-  redis:
-    image: redis:7-alpine
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  backend:
-    build: ./backend
+  remover:
+    build: ./remover
     env_file: .env
     environment:
-      RUN_MIGRATIONS: "true"
-      POSTGRES_HOST: db
+      REMOVER_HOST: 0.0.0.0
+      REMOVER_PORT: "8001"
       U2NET_HOME: /models
     volumes:
-      - media_data:/app/media
       - model_data:/models
-    depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/')",
-        ]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-
-  celery:
-    build: ./backend
-    env_file: .env
-    command: celery -A config worker --loglevel=info
-    environment:
-      POSTGRES_HOST: db
-      U2NET_HOME: /models
-    volumes:
-      - media_data:/app/media
-      - model_data:/models
-    depends_on:
-      backend:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  celery-beat:
-    build: ./backend
-    env_file: .env
-    command: celery -A config beat --loglevel=info
-    environment:
-      POSTGRES_HOST: db
-      U2NET_HOME: /models
-    volumes:
-      - media_data:/app/media
-      - model_data:/models
-    depends_on:
-      backend:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    expose:
+      - "8001"
+    restart: unless-stopped
 
   web:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
       args:
-        API_PROXY_TARGET: http://backend:8000
         SITE_URL: ${SITE_URL:-http://localhost:8080}
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
         VITE_ADSENSE_CLIENT_ID: ${VITE_ADSENSE_CLIENT_ID:-}
         VITE_ADSENSE_ENABLED: ${VITE_ADSENSE_ENABLED:-}
         VITE_ADSENSE_MODE: ${VITE_ADSENSE_MODE:-manual}
@@ -95,18 +35,21 @@ services:
         VITE_ADSENSE_SLOT_WORKSPACE: ${VITE_ADSENSE_SLOT_WORKSPACE:-}
         VITE_ADSENSE_SLOT_MID: ${VITE_ADSENSE_SLOT_MID:-}
         VITE_ADSENSE_SLOT_FOOTER: ${VITE_ADSENSE_SLOT_FOOTER:-}
+    env_file: .env
     environment:
-      PORT: 8080
-      API_PROXY_TARGET: http://backend:8000
-      SITE_URL: ${SITE_URL:-http://localhost:8080}
-      TRUST_PROXY_HEADERS: "true"
+      DATABASE_URL: file:/data/solva.db
+      REMOVER_URL: http://remover:8001
+    volumes:
+      - app_data:/data
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
-      backend:
+      remover:
         condition: service_healthy
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
-  media_data:
+  # The ONNX model (u2net is about 176 MB), downloaded once.
   model_data:
+  # The SQLite database. Back this up: it holds every account.
+  app_data:

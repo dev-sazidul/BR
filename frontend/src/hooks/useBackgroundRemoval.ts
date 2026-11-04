@@ -2,17 +2,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useObjectUrl } from "./useObjectUrl";
 import { isAbortError, readErrorMessage } from "../services/api";
-import { downloadResult, fetchResultBlob, removeBackground } from "../services/imageService";
-import type { RemovalResult } from "../types/api";
-import { downloadBlob } from "../utils/download";
+import { removeBackground } from "../services/imageService";
+import { downloadBlob, flattenToJpeg } from "../utils/download";
 import { validateClientFile } from "../utils/validateFile";
 
 export type RemovalPhase = "idle" | "uploading" | "processing" | "ready" | "error";
 
+export type CutoutSize = { width: number; height: number };
+
 export function useBackgroundRemoval(maxBytes: number) {
   const [file, setFile] = useState<File | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
-  const [meta, setMeta] = useState<RemovalResult | null>(null);
+  const [meta, setMeta] = useState<CutoutSize | null>(null);
   const [phase, setPhase] = useState<RemovalPhase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -66,7 +67,7 @@ export function useBackgroundRemoval(maxBytes: number) {
       setPhase("uploading");
 
       try {
-        const created = await removeBackground(next, {
+        const result = await removeBackground(next, {
           signal: controller.signal,
           onUploadProgress: (loaded, total) => {
             if (requestId.current !== id || !total) return;
@@ -76,11 +77,8 @@ export function useBackgroundRemoval(maxBytes: number) {
           },
         });
         if (requestId.current !== id) return;
-        setMeta(created);
-        setPhase("processing");
-        const blob = await fetchResultBlob(created.result_url, controller.signal);
-        if (requestId.current !== id) return;
-        setResultBlob(blob);
+        setMeta({ width: result.width, height: result.height });
+        setResultBlob(result.blob);
         setPhase("ready");
       } catch (err) {
         if (requestId.current !== id || isAbortError(err)) return;
@@ -104,19 +102,19 @@ export function useBackgroundRemoval(maxBytes: number) {
 
   const downloadJpg = useCallback(
     async (background: string) => {
-      if (!meta || jpgLock.current) return;
+      if (!resultBlob || jpgLock.current) return;
       jpgLock.current = true;
       setJpgBusy(true);
       try {
-        await downloadResult(meta.download_url, "jpeg", background);
+        downloadBlob(await flattenToJpeg(resultBlob, background), "solva-cutout.jpg");
       } catch (err) {
-        setError(await readErrorMessage(err));
+        setError(err instanceof Error ? err.message : "The JPG could not be created.");
       } finally {
         jpgLock.current = false;
         setJpgBusy(false);
       }
     },
-    [meta],
+    [resultBlob],
   );
 
   return {

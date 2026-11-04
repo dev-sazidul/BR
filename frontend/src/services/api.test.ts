@@ -1,19 +1,7 @@
 import axios from "axios";
 import { describe, expect, it } from "vitest";
 
-import { apiBaseUrl, getErrorMessage } from "./api";
-
-describe("apiBaseUrl", () => {
-  it("keeps the host when the env value already includes /api/v1", () => {
-    expect(apiBaseUrl("https://bg-background.vercel.app/api/v1")).toBe("https://bg-background.vercel.app");
-    expect(apiBaseUrl("https://bg-background.vercel.app/api/v1/")).toBe("https://bg-background.vercel.app");
-  });
-
-  it("uses an empty base for same-origin requests", () => {
-    expect(apiBaseUrl("")).toBe("");
-    expect(apiBaseUrl(undefined)).toBe("");
-  });
-});
+import { getErrorMessage } from "./api";
 
 describe("getErrorMessage", () => {
   it("uses the API error message", () => {
