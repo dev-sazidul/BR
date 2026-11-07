@@ -1,5 +1,6 @@
 services:
   remover:
+    image: solva-remover:latest
     build: ./remover
     env_file: .env
     environment:
@@ -13,6 +14,7 @@ services:
     restart: unless-stopped
 
   web:
+    image: solva-web:latest
     build:
       context: ./frontend
       args:
