@@ -11,10 +11,18 @@ import { ErrorBanner } from "../components/common/ErrorBanner";
 import { Spinner } from "../components/common/Spinner";
 import { readErrorMessage } from "../services/api";
 
+declare global {
+  interface Window {
+    __solvaResetToken?: string;
+  }
+}
+
 export function ResetPasswordPage() {
   const { confirmPasswordReset } = useAuth();
   const [params] = useSearchParams();
-  const token = params.get("token") ?? "";
+  const token =
+    params.get("token") ||
+    (typeof window === "undefined" ? "" : window.__solvaResetToken || "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [message, setMessage] = useState<string | null>(null);
