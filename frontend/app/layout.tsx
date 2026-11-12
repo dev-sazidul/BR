@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import type { ReactNode } from "react";
 
+import { ADSENSE_CLIENT_ID } from "../src/ads/publisher";
 import { GA_MEASUREMENT_ID } from "../src/seo/ga";
 import { GoogleAnalytics } from "../src/seo/GoogleAnalytics";
 import { Providers } from "../src/shell/Providers";
@@ -30,6 +31,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const initial = await loadPublicState();
   return (
     <html lang="en">
+      <head>
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+          crossOrigin="anonymous"
+        />
+      </head>
       <body>
         <Script id="ga4-init" strategy="beforeInteractive">
           {`
