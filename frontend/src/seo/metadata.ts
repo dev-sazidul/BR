@@ -79,6 +79,11 @@ const ROUTES: Record<string, RouteSeo> = {
     description: "Update your name, change your password, or delete your Solva account.",
     index: false,
   },
+  "/apps": {
+    pageTitle: "Install Solva",
+    description: "Install Solva on Android, iPhone, iPad, Windows, and macOS from the browser. No app store file is required.",
+    index: true,
+  },
 };
 
 export const SITEMAP_PATHS = Object.entries(ROUTES)

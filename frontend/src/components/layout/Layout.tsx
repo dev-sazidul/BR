@@ -6,6 +6,7 @@ import { AdConsentNotice } from "../ads/AdConsentNotice";
 import { AdConsentProvider } from "../ads/AdConsentProvider";
 import { AdSenseLoader } from "../ads/AdSenseLoader";
 import { AdSlot } from "../ads/AdSlot";
+import { OfflineNotice } from "../../pwa/OfflineNotice";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
 
@@ -30,6 +31,7 @@ export function Layout({ children }: { children: ReactNode }) {
           Skip to content
         </a>
         <Header />
+        <OfflineNotice />
         <div className="pt-4">
           <AdSlot placement="header" />
         </div>

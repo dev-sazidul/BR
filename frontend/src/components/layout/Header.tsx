@@ -1,4 +1,4 @@
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Download, Menu, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useLocation } from "../../lib/navigation";
 
@@ -74,7 +74,7 @@ export function Header() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-white">
+    <header className="sticky top-0 z-20 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
       <div className="flex h-14 w-full min-w-0 items-center gap-2 px-3 sm:gap-6 sm:px-6">
         <Link to="/" aria-label="Solva, home" className="shrink-0" onClick={() => window.scrollTo({ top: 0 })}>
           <Logo />
@@ -96,6 +96,14 @@ export function Header() {
           <MorePages active={moreLinks.some((link) => location.pathname === link.href)} />
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-4">
+          <Link
+            to="/apps"
+            aria-label="Apps Download"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-ink/80 hover:text-ink"
+          >
+            <Download aria-hidden="true" size={16} />
+            <span className="hidden sm:inline">Apps Download</span>
+          </Link>
           {user ? (
             <span className="hidden items-center gap-2 sm:inline-flex">
               <UserAvatar name={user.name} />
@@ -147,6 +155,9 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            <Link to="/apps" className="rounded-md px-2 py-2 text-ink/80">
+              Apps Download
+            </Link>
             {user ? null : (
               <Link to="/sign-in" className="rounded-md px-2 py-2 text-ink/80 sm:hidden">
                 Login
