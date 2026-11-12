@@ -132,6 +132,18 @@ Docker reads the root `.env` (see `.env.example`). Local development reads `fron
 | `CONTACT_EMAIL` | empty | web | Shown on the contact page. No mail is sent. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | empty | web | Password reset email. |
 
+## Install the app
+
+Solva is a progressive web app. There is no APK, IPA, or desktop installer. Open `/apps` from Apps Download in the header, or follow the steps for the device.
+
+Android Chrome shows Install App when the browser allows it. Otherwise use the Chrome menu and choose Install app or Add to Home screen.
+
+iPhone and iPad only install from Safari: tap Share, then Add to Home Screen, then Add. Other iOS browsers cannot add the icon.
+
+Chrome and Edge on Windows, macOS, and Linux use the install icon in the address bar, or the browser menu. Safari on macOS uses Share, then Add to Dock. Firefox does not install the app.
+
+The installed app needs a connection to remove a background, sign in, or download a new result. Pages already opened can open again offline. A new deploy replaces the previous service worker the next time the app loads. Installation requires HTTPS; `next dev` does not register the service worker.
+
 ## Advertising
 
 The page reserves four ad areas: under the header, under the upload workspace, between How it works and Features, and above the footer. They are labeled “Advertisement” and sit outside the drop zone, the preview, and the download buttons.
