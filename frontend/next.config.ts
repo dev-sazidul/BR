@@ -45,8 +45,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   eslint: { ignoreDuringBuilds: true },
   async headers() {
-    if (process.env.NODE_ENV !== "production") return [];
-    return [{ source: "/:path*", headers: securityHeaders }];
+    const serviceWorker = {
+      source: "/sw.js",
+      headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
+    };
+    if (process.env.NODE_ENV !== "production") return [serviceWorker];
+    return [serviceWorker, { source: "/:path*", headers: securityHeaders }];
   },
 };
 
