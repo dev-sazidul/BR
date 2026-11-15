@@ -14,6 +14,8 @@ import "@fontsource/outfit/600.css";
 import "@fontsource/outfit/700.css";
 import "../src/styles/index.css";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteOrigin()),
   title: { default: "Solva — Remove Image Backgrounds", template: "%s" },

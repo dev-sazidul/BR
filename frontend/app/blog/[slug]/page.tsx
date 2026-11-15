@@ -5,7 +5,7 @@ import { metadataFor } from "../../../src/seo/next-metadata";
 import { BlogPostPage } from "../../../src/views/BlogPostPage";
 
 interface PageProps {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export function generateStaticParams() {
@@ -15,26 +15,25 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const resolved = await Promise.resolve(params);
-  const post = getBlogPost(resolved.slug);
+  const { slug } = await params;
+  const post = getBlogPost(slug);
   if (!post) {
     return metadataFor("/not-found");
   }
-  return metadataFor(`/blog/${resolved.slug}`);
+  return metadataFor(`/blog/${slug}`);
 }
 
 export default async function Page({ params }: PageProps) {
-  const resolved = await Promise.resolve(params);
-  const post = getBlogPost(resolved.slug);
+  const { slug } = await params;
+  const post = getBlogPost(slug);
   if (!post) {
     notFound();
   }
 
   return (
     <>
-      <JsonLd path={`/blog/${resolved.slug}`} />
-      <BlogPostPage slug={resolved.slug} />
+      <JsonLd path={`/blog/${slug}`} />
+      <BlogPostPage slug={slug} />
     </>
   );
 }
-
