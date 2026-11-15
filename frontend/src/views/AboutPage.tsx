@@ -1,20 +1,40 @@
 "use client";
 
+import { EcosystemSection, FutureSolutionBadge } from "../components/layout/EcosystemSection";
 import { TextPage } from "../components/layout/TextPage";
 
 export function AboutPage() {
   return (
-    <TextPage title="About">
+    <TextPage title="About Solva">
+      <div className="mb-6">
+        <FutureSolutionBadge />
+      </div>
+
       <p>
-        Solva is a single-purpose tool for removing the background from one image. You upload a picture, the server
-        runs the configured AI model, and you download a transparent PNG.
+        Solva is a single-purpose, privacy-first tool designed for instant, high-precision
+        image background removal. You upload an image, our deep learning segmentation model
+        isolates the subject, and you download a crisp transparent PNG in seconds.
       </p>
+
       <p>
-        There are no galleries or payment plans. An account is optional and is not required to upload, preview, or
-        download a cutout. The person running the server chooses the model, the upload limit, and how long results
-        are kept.
+        Unlike complex editing suites, Solva requires no credit cards, subscriptions, or intrusive
+        registrations. An account is completely optional; you can upload, edit, preview, and download
+        cutouts as a guest. All image processing occurs strictly in memory without persistent file
+        storage, keeping your personal photographs private and secure.
       </p>
-      <p>Cutouts can miss fine edges. Hair, glass, and motion blur are the usual hard cases.</p>
+
+      <p>
+        Whether you are generating e-commerce product photos for Amazon and Shopify, crafting custom
+        avatars and biometric passport headshots in our{" "}
+        <a href="/portrait" className="font-medium text-brand underline underline-offset-2">
+          Portrait Studio
+        </a>
+        , or assembling YouTube thumbnails, Solva streamlines your creative workflow.
+      </p>
+
+      <div className="mt-12 border-t border-line pt-10">
+        <EcosystemSection />
+      </div>
     </TextPage>
   );
 }

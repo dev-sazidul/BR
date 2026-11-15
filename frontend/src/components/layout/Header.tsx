@@ -10,12 +10,14 @@ import { UserAvatar } from "../account/UserAvatar";
 const links = [
   { href: "/#remove", label: "Remove background", id: "remove", hash: true },
   { href: "/portrait", label: "Portraits", id: "portrait", hash: false },
+  { href: "/blog", label: "Blog", id: "blog", hash: false },
   { href: "/#how-it-works", label: "How it works", id: "how-it-works", hash: true },
   { href: "/#features", label: "Features", id: "features", hash: true },
 ];
 
 const moreLinks = [
   { href: "/about", label: "About" },
+  { href: "/blog", label: "Blog" },
   { href: "/contact", label: "Contact" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
@@ -52,13 +54,15 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const section = location.pathname === "/" ? location.hash.replace("#", "") : "";
   const activeId =
-    location.pathname === "/portrait"
-      ? "portrait"
-      : section === "how-it-works" || section === "features"
-        ? section
-        : location.pathname === "/"
-          ? "remove"
-          : "";
+    location.pathname.startsWith("/blog")
+      ? "blog"
+      : location.pathname === "/portrait"
+        ? "portrait"
+        : section === "how-it-works" || section === "features"
+          ? section
+          : location.pathname === "/"
+            ? "remove"
+            : "";
 
   useEffect(() => {
     setOpen(false);

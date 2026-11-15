@@ -1,3 +1,5 @@
+import { DEFAULT_LOCAL_URL, PRODUCTION_DOMAIN } from "../seo/siteConfig";
+
 /**
  * Server settings, read from the environment on each call so tests and a
  * restarted process both see the current values. Nothing here is sent to the
@@ -23,7 +25,8 @@ function bool(name: string, fallback: boolean): boolean {
 }
 
 export function serverSettings() {
-  const siteUrl = text("SITE_URL", "http://127.0.0.1:5173").replace(/\/$/, "");
+  const fallback = process.env.NODE_ENV === "production" ? PRODUCTION_DOMAIN : DEFAULT_LOCAL_URL;
+  const siteUrl = text("SITE_URL", fallback).replace(/\/$/, "");
   return {
     production: process.env.NODE_ENV === "production",
     siteUrl,

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { GA_MEASUREMENT_ID } from "../src/seo/ga";
 import { GoogleAnalytics } from "../src/seo/GoogleAnalytics";
+import { getSiteOrigin } from "../src/seo/siteConfig";
 import { Providers } from "../src/shell/Providers";
 import { loadPublicState } from "../src/seo/load-public";
 
@@ -14,7 +15,7 @@ import "@fontsource/outfit/700.css";
 import "../src/styles/index.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || "http://127.0.0.1:5173"),
+  metadataBase: new URL(getSiteOrigin()),
   title: { default: "Solva — Remove Image Backgrounds", template: "%s" },
   description: "Solva removes image backgrounds and gives you a transparent PNG to download.",
   icons: { icon: "/favicon.svg" },
