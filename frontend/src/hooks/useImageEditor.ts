@@ -129,6 +129,18 @@ export function useImageEditor(foregroundUrl: string, maxBytes: number, fileName
     [commit],
   );
 
+  const selectRemoteBackground = useCallback(
+    (url: string) => {
+      setUploadError(null);
+      commit((current) => ({
+        ...current,
+        background: { type: "image", url, fit: "cover", scale: 1, offsetX: 0, offsetY: 0, presetId: null },
+        matchScene: true,
+      }));
+    },
+    [commit],
+  );
+
   const uploadBackground = useCallback(
     async (file: File) => {
       const problem = validateClientFile(file, maxBytes);
@@ -278,6 +290,7 @@ export function useImageEditor(foregroundUrl: string, maxBytes: number, fileName
     selectTransparent,
     selectColor,
     selectPreset,
+    selectRemoteBackground,
     uploadBackground,
     clearBackgroundImage,
     placeBackground,

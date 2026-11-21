@@ -30,6 +30,7 @@ Served by Next.js. The full contract is in [docs/openapi.yaml](docs/openapi.yaml
 | --- | --- | --- |
 | `GET` | `/api/v1/health` | 200 while the site is up. `ai.available` says whether removal can run. |
 | `GET` | `/api/v1/config` | Public limits only. |
+| `GET` | `/api/v1/backgrounds/search?q=...&page=1&orientation=landscape` | Optional Pexels photo search for the editor. Requires server-only `PEXELS_API_KEY`. |
 | `POST` | `/api/v1/images/remove-background` | Multipart field `image`. Returns `image/png` with `X-Image-Width` and `X-Image-Height`. |
 | `POST` | `/api/v1/auth/register` | Creates an account and signs in. |
 | `POST` | `/api/v1/auth/login` | Signs in. `remember: false` gives a browser-session cookie. |
@@ -126,6 +127,8 @@ Docker reads the root `.env` (see `.env.example`). Local development reads `fron
 | `MAX_IMAGE_PIXELS` | 16000000 | remover | Decompression-bomb ceiling. |
 | `PROCESSING_TIMEOUT_SECONDS` | 120 | both | When removal gives up with 504. ONNX cannot be cancelled, so the worker may still finish. |
 | `BACKGROUND_REMOVAL_RATE` | `10/minute` | web | Per-address limit for removal. |
+| `PEXELS_API_KEY` | empty | web | Optional server-only key for the free Pexels photo search. Never sent to the browser. |
+| `BACKGROUND_SEARCH_RATE` | `60/hour` | web | Per-address limit for uncached Pexels searches. |
 | `AUTH_RATE` | `8/minute` | web | Per-address limit for account writes. |
 | `TRUSTED_PROXY_COUNT` | 1 | web | Proxies in front of web that append to `X-Forwarded-For`. |
 | `DISABLE_RATE_LIMITS` | false | web | For local testing only. |
@@ -143,6 +146,14 @@ iPhone and iPad only install from Safari: tap Share, then Add to Home Screen, th
 Chrome and Edge on Windows, macOS, and Linux use the install icon in the address bar, or the browser menu. Safari on macOS uses Share, then Add to Dock. Firefox does not install the app.
 
 The installed app needs a connection to remove a background, sign in, or download a new result. Pages already opened can open again offline. A new deploy replaces the previous service worker the next time the app loads. Installation requires HTTPS; `next dev` does not register the service worker.
+
+## Smart editor backgrounds
+
+The editor keeps the uploaded cutout as the untouched transparent foreground. Its existing canvas compositor places the chosen scene behind it and retains the existing lighting match and contact-shadow controls. Smart search samples the cutout's visible pixels for a dominant color and uses the image's portrait/landscape shape; add a scene or subject description for semantic search terms. This is lightweight browser-side analysis, not a semantic image-recognition model.
+
+To enable online search, set `PEXELS_API_KEY` in the server environment (the root `.env` for Docker, or `frontend/.env` for local development), then restart/redeploy the web service. Pexels is a free, optional API with per-key request limits. The endpoint makes server-side authenticated requests, normalizes queries, caches results for up to 24 hours in each web process, applies a per-IP limit, and guards upstream misses at 180/hour and 18,000 per 30-day window per process. The Pexels key, process cache, and quota guard are process-local; keep a single web replica unless you add shared cache/quota storage. Search cards show photographer credit and link to Pexels; keep that credit visible when using the photos. If the key is absent or Pexels is unavailable, the editor explains the problem and its built-in presets and custom image upload remain usable. See Pexels' [API documentation](https://www.pexels.com/api/documentation/) for current usage rules and limits.
+
+AI background generation is unavailable in this deployment. The configured remover runs U²-Net through CPU ONNX Runtime; the Docker setup includes no image-generation model or GPU. No hosted generator, payment method, or credit-based service is configured. The editor says so and does not pretend to generate an image. Existing foreground blending uses the original alpha cutout, lighting adjustment, and editable contact shadow; it does not warp or regenerate the subject.
 
 ## Advertising
 

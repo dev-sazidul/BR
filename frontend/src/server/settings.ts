@@ -36,11 +36,13 @@ export function serverSettings() {
     removerToken: text("REMOVER_TOKEN"),
     removerModel: text("REMBG_MODEL", "u2net"),
     processingTimeoutSeconds: int("PROCESSING_TIMEOUT_SECONDS", 120),
+    pexelsApiKey: text("PEXELS_API_KEY"),
 
     maxUploadBytes: int("MAX_UPLOAD_BYTES", 10 * 1024 * 1024),
     maxDimensionPx: int("MAX_DIMENSION_PX", 4096),
 
     removalRate: text("BACKGROUND_REMOVAL_RATE", "10/minute"),
+    backgroundSearchRate: text("BACKGROUND_SEARCH_RATE", "60/hour"),
     authRate: text("AUTH_RATE", "8/minute"),
     disableRateLimits: bool("DISABLE_RATE_LIMITS", false),
     /** Reverse proxies in front of Next.js that append to X-Forwarded-For. */

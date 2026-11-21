@@ -19,6 +19,7 @@ const UNITS: Record<string, number> = {
   hour: 3_600_000,
   d: 86_400_000,
   day: 86_400_000,
+  month: 30 * 86_400_000,
 };
 
 const windows = new Map<string, Window>();

@@ -14,9 +14,11 @@ import { EditorProperties, SizeFields } from "./EditorProperties";
 import { ExportDialog } from "./ExportDialog";
 import { ImageTransformToolbar } from "./ImageTransformToolbar";
 import { Button } from "../common/Button";
+import { SmartBackgroundSearch } from "./SmartBackgroundSearch";
 
 const TOOLS: Array<{ id: EditorTool; label: string }> = [
   { id: "presets", label: "Natural backgrounds" },
+  { id: "background", label: "Find Backgrounds" },
   { id: "upload", label: "Custom background" },
   { id: "crop", label: "Crop" },
   { id: "rotate", label: "Rotate" },
@@ -136,6 +138,12 @@ export function AdvancedImageEditor({ originalUrl, foregroundUrl, fileName, maxB
                   setCustom(color);
                   editor.selectColor(color, null);
                 }}
+              />
+            ) : null}
+            {editor.tool === "background" ? (
+              <SmartBackgroundSearch
+                subject={editor.foreground}
+                onApply={(photo) => editor.selectRemoteBackground(photo.src.large)}
               />
             ) : null}
             {editor.tool === "upload" ? (
