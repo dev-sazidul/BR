@@ -26,8 +26,10 @@ export function AppConfigProvider({
   const [health, setHealth] = useState<HealthResponse | null>(initial?.health ?? null);
 
   useEffect(() => {
-    if (initial) return;
+    if (initial?.health?.ai?.available) return;
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
     async function load() {
       try {
         const [nextConfig, nextHealth] = await Promise.all([fetchPublicConfig(), fetchHealth()]);
@@ -35,16 +37,21 @@ export function AppConfigProvider({
         setConfig(nextConfig);
         setHealth(nextHealth);
         setStatus("ready");
+        if (!nextHealth?.ai?.available) {
+          timer = setTimeout(load, 3000);
+        }
       } catch {
         if (cancelled) return;
         setConfig(FALLBACK_CONFIG);
         setHealth(null);
         setStatus("unavailable");
+        timer = setTimeout(load, 5000);
       }
     }
     void load();
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
   }, [initial]);
 

@@ -5,6 +5,8 @@ import { Layout } from "../components/layout/Layout";
 import { useLocation } from "../lib/navigation";
 import { AboutPage } from "../views/AboutPage";
 import { AccountSettingsPage } from "../views/AccountSettingsPage";
+import { BlogIndexPage } from "../views/BlogIndexPage";
+import { BlogPostPage } from "../views/BlogPostPage";
 import { ContactPage } from "../views/ContactPage";
 import { ForgotPasswordPage } from "../views/ForgotPasswordPage";
 import { HomePage } from "../views/HomePage";
@@ -19,6 +21,14 @@ import { TermsPage } from "../views/TermsPage";
 import { AppConfigProvider } from "./ConfigProvider";
 
 function pageFor(pathname: string) {
+  if (pathname === "/blog") {
+    return <BlogIndexPage />;
+  }
+  if (pathname.startsWith("/blog/")) {
+    const slug = pathname.replace(/^\/blog\//, "").split("/")[0] || "";
+    return <BlogPostPage slug={slug} />;
+  }
+
   switch (pathname) {
     case "/":
       return <HomePage />;

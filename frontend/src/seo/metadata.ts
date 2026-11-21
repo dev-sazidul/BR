@@ -1,3 +1,5 @@
+import { BLOG_POSTS } from "../data/blogPosts";
+
 type PageMeta = {
   title: string;
   description: string;
@@ -26,6 +28,12 @@ const ROUTES: Record<string, RouteSeo> = {
     pageTitle: "Portrait and passport photos",
     description:
       "Frame a cutout as a profile photo or a document size. Each official size stays attached to its source, and unverified sizes are marked.",
+    index: true,
+  },
+  "/blog": {
+    pageTitle: "Blog & Tutorials",
+    description:
+      "Actionable tutorials and guides on background removal, transparent PNGs, e-commerce product clipping, passport photos, and creator workflows.",
     index: true,
   },
   "/about": {
@@ -85,6 +93,14 @@ const ROUTES: Record<string, RouteSeo> = {
     index: true,
   },
 };
+
+for (const post of BLOG_POSTS) {
+  ROUTES[`/blog/${post.slug}`] = {
+    pageTitle: post.title,
+    description: post.description,
+    index: true,
+  };
+}
 
 export const SITEMAP_PATHS = Object.entries(ROUTES)
   .filter(([, route]) => route.index)
@@ -150,6 +166,47 @@ export function resolvePageMeta(pathname: string, origin: string): PageMeta {
         },
       },
     );
+  } else if (path.startsWith("/blog/")) {
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: pageTitle,
+      description,
+      url: pageUrl,
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": pageUrl,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "FutureSolutionAI",
+        url: "https://futuresolutionai.com",
+      },
+    });
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: `${base}/`,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Blog",
+          item: `${base}/blog`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: pageTitle,
+          item: pageUrl,
+        },
+      ],
+    });
   } else if (route) {
     jsonLd.push({
       "@context": "https://schema.org",
